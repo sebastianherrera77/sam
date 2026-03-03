@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAMI · Sistema de Acompañamiento y Seguimiento Integral</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  
+  <style>
+:root {
+  --celeste-primary: #3AACE2;
+  --celeste-dark: #0D6A9E;
+  --gradient-2: linear-gradient(135deg, #3AACE2 0%, #0D6A9E 100%);
+  --text: #1A2E3B;
+  --text-light: #4A6A7C;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Sora', sans-serif;
+  background: linear-gradient(135deg, #F8FBFC 0%, #EBF6FC 100%);
+}
+
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 1.2rem 2.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(58, 172, 226, 0.2);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+}
+
+.nav-brand {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: var(--gradient-2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-decoration: none;
+}
+
+.nav-links { display: flex; gap: 2.5rem; list-style: none; }
+.nav-links a { text-decoration: none; color: var(--text-light); font-size: 0.9rem; font-weight: 500; transition: color 0.3s; }
+.nav-links a:hover { color: var(--celeste-primary); }
+
+.nav-btn {
+  background: var(--gradient-2);
+  color: white;
+  border: none;
+  padding: 10px 28px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(58, 172, 226, 0.3);
+  transition: all 0.3s;
+}
+.nav-btn:hover { transform: translateY(-3px); }
+
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  margin-top: 60px;
+  position: relative;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(58, 172, 226, 0.05) 100%);
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  top: -100px;
+  right: -100px;
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(30px); }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 700px;
+  text-align: center;
+}
+
+.badge {
+  display: inline-flex;
+  gap: 8px;
+  background: rgba(58, 172, 226, 0.12);
+  border: 1px solid rgba(58, 172, 226, 0.3);
+  color: var(--celeste-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 8px 18px;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+}
+
+h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 900;
+  color: var(--text);
+  margin-bottom: 1.2rem;
+}
+
+h1 span { background: var(--gradient-2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+.hero-sub {
+  font-size: 1.05rem;
+  color: var(--text-light);
+  margin: 0 auto 2.5rem;
+  line-height: 1.8;
+  max-width: 580px;
+}
+
+.hero-cta { display: flex; gap: 1.2rem; justify-content: center; flex-wrap: wrap; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background: var(--gradient-2);
+  color: white;
+  box-shadow: 0 10px 30px rgba(58, 172, 226, 0.3);
+}
+.btn-primary:hover { transform: translateY(-4px); }
+
+.btn-outline {
+  background: rgba(58, 172, 226, 0.1);
+  color: var(--celeste-primary);
+  border: 2px solid var(--celeste-primary);
+}
+.btn-outline:hover { transform: translateY(-4px); }
+
+.stats-strip {
+  background: linear-gradient(90deg, rgba(102, 126, 234, 0.08) 0%, rgba(58, 172, 226, 0.08) 100%);
+  padding: 3rem 2.5rem;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  border-top: 1px solid rgba(58, 172, 226, 0.15);
+  border-bottom: 1px solid rgba(58, 172, 226, 0.15);
+}
+
+.stat-item {
+  text-align: center;
+  padding: 0 3rem;
+  border-right: 1px solid rgba(58, 172, 226, 0.15);
+}
+
+.stat-item:last-child { border-right: none; }
+
+.stat-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  background: var(--gradient-2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-light);
+  text-transform: uppercase;
+}
+
+section { padding: 6rem 2.5rem; position: relative; }
+.container { max-width: 1200px; margin: 0 auto; }
+.section-label { font-size: 0.7rem; font-weight: 700; color: var(--celeste-primary); text-transform: uppercase; margin-bottom: 1rem; }
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+  font-weight: 900;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.section-body { font-size: 0.95rem; color: var(--text-light); line-height: 1.8; max-width: 560px; }
+
+.dimensions { background: linear-gradient(180deg, rgba(102, 126, 234, 0.03) 0%, transparent 100%); }
+.dim-intro { text-align: center; margin-bottom: 3rem; max-width: 700px; margin: 0 auto 3rem; }
+.dim-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.dim-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(58, 172, 226, 0.2);
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  text-align: center;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.dim-card:hover {
+  transform: translateY(-12px);
+  border-color: rgba(58, 172, 226, 0.4);
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15);
+}
+
+.dim-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.dim-card h3 { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 0.8rem; }
+.dim-card p { font-size: 0.9rem; color: var(--text-light); line-height: 1.75; }
+
+.how { background: linear-gradient(135deg, rgba(58, 172, 226, 0.05) 0%, transparent 100%); }
+.how-intro { text-align: center; margin-bottom: 3rem; }
+.how-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.step {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(58, 172, 226, 0.15);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.4s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.step:hover {
+  transform: translateY(-8px);
+  border-color: rgba(58, 172, 226, 0.3);
+  box-shadow: 0 16px 32px rgba(102, 126, 234, 0.12);
+}
+
+.step-num {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: var(--gradient-2);
+  color: white;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.2rem;
+  box-shadow: 0 8px 24px rgba(58, 172, 226, 0.3);
+}
+
+.step h3 { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 0.6rem; }
+.step p { font-size: 0.85rem; color: var(--text-light); line-height: 1.7; flex-grow: 1; }
+
+.cta-section { background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, transparent 100%); text-align: center; padding: 5rem 2.5rem; }
+
+.contact-cards {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 2.5rem;
+  margin-bottom: 3rem;
+}
+
+.contact-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(58, 172, 226, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+  min-width: 240px;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.4s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.contact-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(58, 172, 226, 0.4);
+  box-shadow: 0 16px 32px rgba(102, 126, 234, 0.12);
+}
+
+.contact-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--gradient-2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 8px 20px rgba(58, 172, 226, 0.3);
+}
+
+.contact-card h4 {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--celeste-primary);
+  margin-bottom: 0.5rem;
+}
+
+.contact-card p { font-size: 0.9rem; color: var(--text-light); font-weight: 500; }
+
+.map-section { margin-top: 2rem; text-align: center; }
+.map-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+}
+
+#map {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 450px;
+  border-radius: 16px;
+  border: 1px solid rgba(58, 172, 226, 0.2);
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15);
+}
+
+.leaflet-control { z-index: 10 !important; }
+.leaflet-popup { z-index: 20 !important; }
+
+.chatbot-toggle {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--gradient-2);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(58, 172, 226, 0.4);
+  transition: all 0.3s;
+  z-index: 99;
+  padding: 0;
+  overflow: hidden;
+}
+
+.chatbot-toggle:hover { transform: scale(1.1); }
+.chatbot-toggle.hidden { display: none; }
+.chatbot-toggle img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+
+.chatbot-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 400px;
+  height: 600px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  display: none;
+  flex-direction: column;
+  z-index: 100;
+  animation: slideUp 0.3s ease-out;
+  overflow: hidden;
+}
+
+.chatbot-container.active { display: flex; }
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chatbot-header {
+  background: var(--gradient-2);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chatbot-header h3 { font-size: 1rem; font-weight: 700; margin: 0; }
+.chatbot-close { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+
+.chatbot-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.chatbot-message { margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.8rem; animation: fadeIn 0.3s ease-out; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chatbot-message.user { justify-content: flex-end; }
+
+.chatbot-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.chatbot-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.chatbot-text {
+  background: #f0f4f9;
+  color: var(--text);
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  max-width: 85%;
+}
+
+.chatbot-message.user .chatbot-text {
+  background: var(--gradient-2);
+  color: white;
+  margin-left: auto;
+}
+
+.chatbot-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-top: auto;
+  padding-bottom: 1rem;
+}
+
+.chatbot-question-btn {
+  background: rgba(58, 172, 226, 0.1);
+  border: 1px solid rgba(58, 172, 226, 0.3);
+  color: var(--text);
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: left;
+}
+
+.chatbot-question-btn:hover {
+  background: rgba(58, 172, 226, 0.2);
+  border-color: var(--celeste-primary);
+  transform: translateX(4px);
+}
+
+.chatbot-advisor {
+  background: var(--gradient-2);
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.chatbot-advisor:hover { transform: translateY(-2px); }
+
+.chatbot-advisor-info {
+  background: #f0f4f9;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-top: 1rem;
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  display: none;
+}
+
+.chatbot-advisor-info a {
+  color: var(--celeste-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+footer {
+  background: linear-gradient(135deg, rgba(13, 106, 158, 0.95) 0%, rgba(102, 126, 234, 0.9) 100%);
+  padding: 3rem 2.5rem;
+  text-align: center;
+  color: white;
+}
+
+.footer-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+footer p { font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); }
+
+@media (max-width: 768px) {
+  nav { padding: 1rem 1.5rem; }
+  .nav-links { display: none; }
+  section { padding: 3.5rem 1.5rem; }
+  .dim-grid { grid-template-columns: 1fr; }
+  .stat-item { padding: 0 1.5rem; border: none; }
+  #map { height: 300px; }
+  .chatbot-container { width: calc(100vw - 2rem); right: 1rem; bottom: 5rem; }
+}
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="#" class="nav-brand">SAMI</a>
+    <ul class="nav-links">
+      <li><a href="#dimensions">Dimensiones</a></li>
+      <li><a href="#how">Proceso</a></li>
+      <li><a href="#contact">Contacto</a></li>
+    </ul>
+    <a href="#contact" class="nav-btn">Empezar</a>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-content">
+      <div class="badge">● Innovación en Salud · UPCH 2026</div>
+      <h1>El cuidado <span>continúa</span><br>después de la consulta</h1>
+      <p class="hero-sub">SAMI es un sistema integral de seguimiento y acompañamiento personalizado vía WhatsApp, potenciado con IA, que acompaña a pacientes crónicos las 24 horas para mejorar su adherencia terapéutica.</p>
+      <div class="hero-cta">
+        <a href="#how" class="btn btn-primary">Ver cómo funciona →</a>
+        <a href="#contact" class="btn btn-outline">Contactar ahora</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats-strip">
+    <div class="stat-item"><span class="stat-num">24/7</span><span class="stat-label">Acompañamiento</span></div>
+    <div class="stat-item"><span class="stat-num">6</span><span class="stat-label">Dimensiones</span></div>
+    <div class="stat-item"><span class="stat-num">WhatsApp</span><span class="stat-label">Principal</span></div>
+    <div class="stat-item"><span class="stat-num">IA</span><span class="stat-label">Inteligente</span></div>
+  </div>
+
+  <section class="dimensions" id="dimensions">
+    <div class="container">
+      <div class="dim-intro">
+        <span class="section-label">Sistema Integral</span>
+        <h2 class="section-title">6 Dimensiones de Adherencia</h2>
+        <p class="section-body">La adherencia va más allá de tomar medicación. Consideramos todos los aspectos de la vida del paciente.</p>
+      </div>
+      <div class="dim-grid">
+        <div class="dim-card">
+          <div class="dim-icon">💊</div>
+          <h3>Farmacológica</h3>
+          <p>Monitoreo de horarios, omisiones y manejo de efectos secundarios en tiempo real.</p>
+        </div>
+        <div class="dim-card">
+          <div class="dim-icon">🥗</div>
+          <h3>Conductual</h3>
+          <p>Seguimiento de alimentación, actividad física e indicaciones post procedimiento.</p>
+        </div>
+        <div class="dim-card">
+          <div class="dim-icon">📅</div>
+          <h3>Citas</h3>
+          <p>Confirmación y detección de cancelaciones repetidas que alertan al equipo.</p>
+        </div>
+        <div class="dim-card">
+          <div class="dim-icon">🧠</div>
+          <h3>Emocional</h3>
+          <p>Detección de ansiedad, depresión y derivación a psicología cuando es necesario.</p>
+        </div>
+        <div class="dim-card">
+          <div class="dim-icon">👥</div>
+          <h3>Sociológica</h3>
+          <p>Evaluación de factores económicos, transporte, familia y creencias culturales.</p>
+        </div>
+        <div class="dim-card">
+          <div class="dim-icon">🏥</div>
+          <h3>Experiencia Clínica</h3>
+          <p>Evaluación de calidad de atención recibida y satisfacción del paciente.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="how" id="how">
+    <div class="container">
+      <div class="how-intro">
+        <span class="section-label">Flujo del Sistema</span>
+        <h2 class="section-title">Proceso Integral de Acompañamiento</h2>
+        <p class="section-body">Desde el registro inicial hasta el análisis continuo de adherencia.</p>
+      </div>
+      <div class="how-steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Registro</h3>
+          <p>Carga de perfil clínico completo con diagnóstico, medicación y plan de seguimiento.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Diálogo</h3>
+          <p>Conversación natural vía WhatsApp con recordatorios y seguimiento personalizado.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Análisis</h3>
+          <p>Cálculo de índice de adherencia por dimensión y detección de riesgos.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <h3>Alertas</h3>
+          <p>Reportes al equipo médico con nivel de adherencia y factores causales.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <h3>Intervención</h3>
+          <p>Actuación focalizada y personalizada del equipo clínico antes del abandono.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section" id="contact">
+    <div class="container">
+      <span class="section-label">Conecta</span>
+      <h2 class="section-title">¿Listo para transformar el cuidado?</h2>
+      <p class="section-body">Contáctanos para conocer cómo SAMI puede mejorar la adherencia de tus pacientes.</p>
+      
+      <div class="contact-cards">
+        <a href="mailto:business@mocaico.dev" class="contact-card">
+          <div class="contact-icon">✉️</div>
+          <h4>Email</h4>
+          <p>business@mocaico.dev</p>
+        </a>
+        <a href="https://wa.me/51963242281" target="_blank" class="contact-card">
+          <div class="contact-icon">💬</div>
+          <h4>WhatsApp</h4>
+          <p>+51 963 242 281</p>
+        </a>
+        <a href="#" class="contact-card">
+          <div class="contact-icon">📍</div>
+          <h4>Ubicación</h4>
+          <p>Lima, Perú</p>
+        </a>
+      </div>
+      
+      <div class="map-section">
+        <h3 class="map-title">Nos encuentras en UPCH</h3>
+        <div id="map"></div>
+      </div>
+    </div>
+  </section>
+
+  <button class="chatbot-toggle" id="chatbotToggle">
+    <img src="assets/bot.png" alt="SAMI Bot" style="pointer-events: none;">
+  </button>
+
+  <div class="chatbot-container" id="chatbotContainer">
+    <div class="chatbot-header">
+      <h3>Asistente SAMI</h3>
+      <button class="chatbot-close" id="chatbotClose">×</button>
+    </div>
+    <div class="chatbot-content" id="chatbotContent">
+      <div class="chatbot-message">
+        <div class="chatbot-avatar">
+          <img src="assets/bot.png" alt="Bot Avatar">
+        </div>
+        <div class="chatbot-text">Hola, soy el asistente de SAMI. ¿En qué puedo ayudarte?</div>
+      </div>
+
+      <div class="chatbot-questions" id="chatbotQuestions">
+        <button class="chatbot-question-btn" data-answer="1">¿Qué es SAMI?</button>
+        <button class="chatbot-question-btn" data-answer="2">¿Cómo mejora la adherencia?</button>
+        <button class="chatbot-question-btn" data-answer="3">¿Es seguro?</button>
+        <button class="chatbot-question-btn" data-answer="4">¿Funciona con cualquier hospital?</button>
+        <button class="chatbot-question-btn" data-answer="5">¿Cómo contactar?</button>
+      </div>
+
+      <button class="chatbot-advisor" id="consultorBtn">📞 Hablar con un Asesor</button>
+
+      <div class="chatbot-advisor-info" id="advisorInfo">
+        <strong>Contacta con nuestro equipo:</strong><br><br>
+        📧 <a href="mailto:sami@upch.pe">sami@upch.pe</a><br>
+        📱 <a href="https://wa.me/51999999999">+51 999 999 999</a>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-logo">SAMI</div>
+    <p>Sistema de Acompañamiento y Seguimiento Integral · UPCH 2026</p>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    const map = L.map('map').setView([-12.0236, -77.0564], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    const markerIcon = L.divIcon({
+      html: '<div style="background: linear-gradient(135deg, #3AACE2 0%, #0D6A9E 100%); border: 3px solid #D6EEF9; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 22px; box-shadow: 0 6px 16px rgba(58, 172, 226, 0.4);">📍</div>',
+      iconSize: [44, 44]
+    });
+    L.marker([-12.0236, -77.0564], { icon: markerIcon }).addTo(map).bindPopup('<div style="text-align: center;"><h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1A2E3B;">UPCH · SAMI</h3><p style="margin: 0; font-size: 13px; color: #4A6A7C;">Av. Honorio Delgado 430<br>San Martín de Porres, Lima</p></div>').openPopup();
+    L.circle([-12.0236, -77.0564], {color: '#D6EEF9', fillColor: '#3AACE2', fillOpacity: 0.08, weight: 2, radius: 300, dashArray: '5, 5'}).addTo(map);
+  } catch (e) { console.log('Mapa:', e); }
+
+  const answers = {
+    1: "SAMI es un Sistema de Acompañamiento y Seguimiento Integral que utiliza WhatsApp e IA para monitorear la adherencia terapéutica 24/7.",
+    2: "SAMI mejora la adherencia considerando 6 dimensiones: farmacológica, conductual, citas, emocional, sociológica y experiencia clínica.",
+    3: "Sí, es seguro. SAMI cumple con HIPAA/GDPR. Datos encriptados y servidores seguros.",
+    4: "SAMI puede integrarse con cualquier hospital, clínica o sistema de salud.",
+    5: "📧 Email: sami@upch.pe\n📱 WhatsApp: +51 999 999 999"
+  };
+
+  const toggle = document.getElementById('chatbotToggle');
+  const container = document.getElementById('chatbotContainer');
+  const closeBtn = document.getElementById('chatbotClose');
+  const content = document.getElementById('chatbotContent');
+  const questions = document.getElementById('chatbotQuestions');
+  const advisor = document.getElementById('consultorBtn');
+  const advisorInfo = document.getElementById('advisorInfo');
+
+  toggle.addEventListener('click', () => {
+    container.classList.add('active');
+    toggle.classList.add('hidden');
+  });
+
+  closeBtn.addEventListener('click', () => {
+    container.classList.remove('active');
+    toggle.classList.remove('hidden');
+  });
+
+  document.querySelectorAll('.chatbot-question-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const id = this.getAttribute('data-answer');
+      const question = this.textContent;
+      const answer = answers[id];
+      const userMsg = document.createElement('div');
+      userMsg.className = 'chatbot-message user';
+      userMsg.innerHTML = `<div class="chatbot-text">${question}</div>`;
+      content.insertBefore(userMsg, questions);
+      const botMsg = document.createElement('div');
+      botMsg.className = 'chatbot-message';
+      botMsg.innerHTML = `<div class="chatbot-avatar"><img src="assets/bot.png" alt="Bot"></div><div class="chatbot-text">${answer}</div>`;
+      content.insertBefore(botMsg, questions);
+      content.scrollTop = content.scrollHeight;
+      questions.style.display = 'none';
+      advisor.textContent = '← Volver';
+    });
+  });
+
+  advisor.addEventListener('click', function() {
+    if (advisorInfo.style.display === 'none') {
+      advisorInfo.style.display = 'block';
+      questions.style.display = 'none';
+    } else {
+      advisorInfo.style.display = 'none';
+      questions.style.display = 'flex';
+      document.querySelectorAll('.chatbot-message.user').forEach(m => m.remove());
+    }
+  });
+});
+  </script>
+
+</body>
+</html>
