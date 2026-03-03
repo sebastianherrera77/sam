@@ -707,7 +707,7 @@ footer p { font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); }
   </section>
 
   <button class="chatbot-toggle" id="chatbotToggle">
-    <img src="assets/bot.png" alt="SAMI Bot" style="pointer-events: none;">
+    <img src="bot.png" alt="SAMI Bot" style="pointer-events: none;">
   </button>
 
   <div class="chatbot-container" id="chatbotContainer">
@@ -718,7 +718,7 @@ footer p { font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); }
     <div class="chatbot-content" id="chatbotContent">
       <div class="chatbot-message">
         <div class="chatbot-avatar">
-          <img src="assets/bot.png" alt="Bot Avatar">
+          <img src="bot.png" alt="Bot Avatar">
         </div>
         <div class="chatbot-text">Hola, soy el asistente de SAMI. ¿En qué puedo ayudarte?</div>
       </div>
@@ -797,7 +797,7 @@ document.addEventListener('DOMContentLoaded', function() {
       content.insertBefore(userMsg, questions);
       const botMsg = document.createElement('div');
       botMsg.className = 'chatbot-message';
-      botMsg.innerHTML = `<div class="chatbot-avatar"><img src="assets/bot.png" alt="Bot"></div><div class="chatbot-text">${answer}</div>`;
+      botMsg.innerHTML = `<div class="chatbot-avatar"><img src="bot.png" alt="Bot"></div><div class="chatbot-text">${answer}</div>`;
       content.insertBefore(botMsg, questions);
       content.scrollTop = content.scrollHeight;
       questions.style.display = 'none';
@@ -819,4 +819,5 @@ document.addEventListener('DOMContentLoaded', function() {
   </script>
 
 </body>
+
 </html>
