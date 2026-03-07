@@ -1008,44 +1008,81 @@
       color: var(--teal);
     }
 
-    .chatbot-footer {
-      padding: 1rem 1.5rem;
-      border-top: 1px solid rgba(11,30,45,0.06);
+    .chatbot-suggestions {
+      display: flex; flex-direction: column; gap: 0.5rem;
+      margin-top: 0.8rem;
+    }
+
+    .chatbot-input-area {
+      padding: 0.9rem 1rem;
+      border-top: 1px solid rgba(11,30,45,0.07);
       background: var(--white);
     }
 
-    .chatbot-advisor {
-      width: 100%;
-      background: var(--navy);
-      color: var(--gold);
-      border: 1px solid rgba(200,169,110,0.3);
-      padding: 0.8rem;
-      border-radius: 6px;
-      font-weight: 600;
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 0.3s;
-      letter-spacing: 0.04em;
+    .chatbot-input-row {
+      display: flex; gap: 0.5rem; align-items: center;
     }
 
-    .chatbot-advisor:hover {
-      background: var(--gold);
-      color: var(--navy);
-    }
-
-    .chatbot-advisor-info {
-      background: rgba(11,30,45,0.04);
-      padding: 1rem;
+    .chatbot-input {
+      flex: 1;
+      padding: 0.65rem 0.9rem;
+      border: 1.5px solid rgba(11,30,45,0.12);
       border-radius: 8px;
-      margin-top: 0.8rem;
-      text-align: center;
-      color: var(--text-mid);
+      font-family: 'DM Sans', sans-serif;
       font-size: 0.82rem;
-      display: none;
-      line-height: 1.7;
+      color: var(--text-dark);
+      outline: none;
+      transition: border-color 0.2s;
+      background: #F8F9FA;
     }
 
-    .chatbot-advisor-info a { color: var(--teal); text-decoration: none; font-weight: 600; }
+    .chatbot-input:focus { border-color: var(--teal); background: var(--white); }
+    .chatbot-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .chatbot-send {
+      width: 36px; height: 36px;
+      background: var(--navy);
+      border: none;
+      border-radius: 8px;
+      color: var(--gold);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .chatbot-send:hover { background: var(--teal); color: var(--white); }
+    .chatbot-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .chatbot-input-footer {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 0.5rem; justify-content: center;
+    }
+
+    .chatbot-typing {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0.7rem 1rem;
+      background: var(--white);
+      border-radius: 12px;
+      border: 1px solid rgba(11,30,45,0.06);
+      width: fit-content;
+      box-shadow: 0 1px 4px rgba(11,30,45,0.06);
+    }
+
+    .chatbot-typing span {
+      width: 6px; height: 6px;
+      background: var(--teal);
+      border-radius: 50%;
+      animation: typingDot 1.2s infinite;
+    }
+
+    .chatbot-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .chatbot-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typingDot {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-5px); opacity: 1; }
+    }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 1024px) {
@@ -1469,13 +1506,13 @@
     <div class="contact-grid">
       <div class="contact-left">
         <div class="contact-info-items">
-          <a href="mailto:sami@upch.pe" class="contact-info-item">
+          <a href="/cdn-cgi/l/email-protection#87f4e6eaeec7f2f7e4efa9f7e2" class="contact-info-item">
             <div class="contact-info-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             </div>
             <div>
               <div class="contact-info-label">Correo electrónico</div>
-              <div class="contact-info-value">sami@upch.pe</div>
+              <div class="contact-info-value"><span class="__cf_email__" data-cfemail="8dfeece0e4cdf8fdeee5a3fde8">[email&#160;protected]</span></div>
             </div>
           </a>
 
@@ -1528,7 +1565,7 @@
     </div>
     <div class="footer-meta">
       <div>Desarrollado en colaboración con la Universidad Peruana Cayetano Heredia</div>
-      <div style="margin-top:4px;">© 2026 SAMI Oncología · Lima, Perú · sami@upch.pe</div>
+      <div style="margin-top:4px;">© 2026 SAMI Oncología · Lima, Perú · <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bbc8dad6d2fbcecbd8d395cbde">[email&#160;protected]</a></div>
     </div>
   </div>
 </footer>
@@ -1543,39 +1580,50 @@
     <div class="chatbot-header-info">
       <div class="chatbot-header-dot"></div>
       <div>
-        <div class="chatbot-header h3" style="font-size:0.9rem; font-weight:600; color:white;">SAMI Oncología</div>
-        <div class="chatbot-header-sub">Atención institucional</div>
+        <div style="font-size:0.9rem; font-weight:600; color:white;">SAMI Oncología</div>
+        <div class="chatbot-header-sub">Asistente institucional · IA</div>
       </div>
     </div>
     <button class="chatbot-close" id="chatClose">×</button>
   </div>
 
   <div class="chatbot-content" id="chatContent">
-    <div class="chatbot-message">
+    <div class="chatbot-message" id="welcomeMsg">
       <div class="chatbot-avatar-box">S</div>
-      <div class="chatbot-text">Bienvenido. Soy SAMI, el asistente de acompañamiento oncológico. ¿En qué puedo orientarle sobre nuestra solución para su institución?</div>
+      <div class="chatbot-text">Bienvenido. Soy el asistente de SAMI Oncología. Puedo responder sus preguntas sobre nuestra solución para clínicas y hospitales. ¿En qué le puedo orientar?</div>
     </div>
 
-    <div class="chatbot-questions" id="chatQuestions">
-      <button class="chatbot-question-btn" data-answer="SAMI opera íntegramente a través de WhatsApp. Una vez registrado el paciente, el sistema inicia conversaciones automatizadas según el protocolo de seguimiento configurado para su diagnóstico y tratamiento, sin requerir que el paciente descargue ninguna aplicación adicional.">¿Cómo funciona el sistema para el paciente?</button>
-      <button class="chatbot-question-btn" data-answer="El equipo médico accede a un dashboard institucional donde visualiza el índice de adherencia de cada paciente y del servicio completo, con histórico y reportes exportables. Además, recibe alertas automatizadas cuando un paciente presenta riesgo de abandono.">¿Qué herramientas tiene el equipo médico?</button>
-      <button class="chatbot-question-btn" data-answer="La implementación no requiere modificaciones en la infraestructura actual de su institución. Nuestro equipo configura el sistema con los protocolos de su servicio de oncología en un plazo aproximado de 2 a 4 semanas, incluyendo capacitación del personal.">¿Cuánto tiempo toma la implementación?</button>
-      <button class="chatbot-question-btn" data-answer="Puede contactarnos directamente a sami@upch.pe o por WhatsApp al +51 963 242 281 para coordinar una demostración personalizada en su institución o de forma remota.">Quiero solicitar una demostración</button>
+    <div class="chatbot-suggestions" id="chatSuggestions">
+      <button class="chatbot-question-btn" onclick="sendSuggestion(this)">¿Cómo funciona para el paciente?</button>
+      <button class="chatbot-question-btn" onclick="sendSuggestion(this)">¿Qué datos recibe el equipo médico?</button>
+      <button class="chatbot-question-btn" onclick="sendSuggestion(this)">¿Cuánto toma la implementación?</button>
+      <button class="chatbot-question-btn" onclick="sendSuggestion(this)">Quiero solicitar una demostración</button>
     </div>
   </div>
 
-  <div class="chatbot-footer">
-    <button class="chatbot-advisor" id="chatAdvisor">Hablar con un especialista →</button>
-    <div class="chatbot-advisor-info" id="advisorInfo">
-      Contacte directamente a nuestro equipo:<br>
-      <a href="mailto:sami@upch.pe">sami@upch.pe</a> ·
-      <a href="https://wa.me/51963242281" target="_blank">+51 963 242 281</a>
+  <div class="chatbot-input-area">
+    <div class="chatbot-input-row">
+      <input
+        type="text"
+        id="chatInput"
+        class="chatbot-input"
+        placeholder="Escriba su consulta institucional..."
+        autocomplete="off"
+      />
+      <button class="chatbot-send" id="chatSend">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <div class="chatbot-input-footer">
+      <a href="mailto:sami@upch.pe" style="color:var(--text-light); font-size:0.7rem; text-decoration:none;">sami@upch.pe</a>
+      <span style="color:var(--text-light); font-size:0.7rem;">·</span>
+      <a href="https://wa.me/51963242281" target="_blank" style="color:var(--text-light); font-size:0.7rem; text-decoration:none;">+51 963 242 281</a>
     </div>
   </div>
 </div>
 
 <!-- ── SCRIPTS ── -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
   // Map
   const map = L.map('map', { zoomControl: true, scrollWheelZoom: false }).setView([-12.0236, -77.0564], 15);
@@ -1596,57 +1644,153 @@
     .bindPopup('<strong style="font-family:sans-serif;font-size:12px;">SAMI Oncología · UPCH</strong><br><span style="font-size:11px;color:#666;">Av. Honorio Delgado 430, SMP</span>')
     .openPopup();
 
-  // Chatbot
-  const toggle = document.getElementById('chatToggle');
-  const container = document.getElementById('chatContainer');
-  const closeBtn = document.getElementById('chatClose');
-  const content = document.getElementById('chatContent');
-  const questions = document.getElementById('chatQuestions');
-  const advisor = document.getElementById('chatAdvisor');
-  const advisorInfo = document.getElementById('advisorInfo');
+  // ── GROQ AI CHATBOT ──
+  const GROQ_CONFIG = {
+    apiKey: "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",
+    model: "llama-3.3-70b-versatile",
+    endpoint: "https://api.groq.com/openai/v1/chat/completions"
+  };
 
-  toggle.addEventListener('click', () => {
-    container.classList.add('active');
-    toggle.classList.add('hidden');
+  const SYSTEM_PROMPT = `Eres el asistente virtual de SAMI Oncología, una solución de seguimiento y acompañamiento integral para pacientes oncológicos desarrollada por la Universidad Peruana Cayetano Heredia (UPCH).
+
+Tu rol es atender consultas institucionales de directores, jefes de oncología y personal médico de clínicas y hospitales que están evaluando adoptar SAMI.
+
+Información clave sobre SAMI:
+- Sistema de seguimiento vía WhatsApp, sin apps adicionales para el paciente
+- Monitorea 6 dimensiones: farmacológica, conductual, adherencia a citas, bienestar emocional, factores socioeconómicos y experiencia institucional
+- Genera índice de adherencia multidimensional en tiempo real
+- Envía alertas automáticas al equipo médico ante riesgo de abandono
+- Dashboard institucional con reportes exportables por paciente y cohorte
+- Implementación en 2-4 semanas, sin cambios en infraestructura existente
+- Desarrollado con protocolos oncológicos validados y supervisión clínica de la UPCH
+- Contacto: sami@upch.pe | WhatsApp: +51 963 242 281
+- Sede: Av. Honorio Delgado 430, San Martín de Porres, Lima, Perú
+
+Instrucciones de comportamiento:
+- Responde siempre en español formal, como representante institucional
+- Sé conciso pero completo — respuestas de 2 a 4 párrafos máximo
+- Si preguntan por precios o tarifas, indica que se coordinan según el tamaño y necesidades de la institución y que pueden contactar al equipo para una propuesta personalizada
+- No inventes datos clínicos ni estadísticas que no se te hayan proporcionado
+- Si la pregunta está fuera del alcance de SAMI, redirecciona amablemente al equipo de contacto
+- No uses emojis ni listas con viñetas en las respuestas — usa prosa formal`;
+
+  const chatHistory = [];
+
+  const chatToggle = document.getElementById('chatToggle');
+  const chatContainer = document.getElementById('chatContainer');
+  const chatCloseBtn = document.getElementById('chatClose');
+  const chatContent = document.getElementById('chatContent');
+  const chatInput = document.getElementById('chatInput');
+  const chatSend = document.getElementById('chatSend');
+  const chatSuggestions = document.getElementById('chatSuggestions');
+
+  chatToggle.addEventListener('click', () => {
+    chatContainer.classList.add('active');
+    chatToggle.classList.add('hidden');
+    chatInput.focus();
   });
 
-  closeBtn.addEventListener('click', () => {
-    container.classList.remove('active');
-    toggle.classList.remove('hidden');
+  chatCloseBtn.addEventListener('click', () => {
+    chatContainer.classList.remove('active');
+    chatToggle.classList.remove('hidden');
   });
 
-  document.querySelectorAll('.chatbot-question-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const userMsg = document.createElement('div');
-      userMsg.className = 'chatbot-message user';
-      userMsg.innerHTML = `<div class="chatbot-text">${this.textContent}</div>`;
+  function sendSuggestion(btn) {
+    const text = btn.textContent;
+    chatSuggestions.style.display = 'none';
+    sendMessage(text);
+  }
 
-      const botMsg = document.createElement('div');
-      botMsg.className = 'chatbot-message';
-      botMsg.innerHTML = `<div class="chatbot-avatar-box">S</div><div class="chatbot-text">${this.dataset.answer}</div>`;
+  function appendMessage(role, text) {
+    const msg = document.createElement('div');
+    msg.className = 'chatbot-message' + (role === 'user' ? ' user' : '');
 
-      content.insertBefore(userMsg, questions);
-      setTimeout(() => {
-        content.insertBefore(botMsg, questions);
-        content.scrollTop = content.scrollHeight;
-      }, 400);
-
-      questions.style.display = 'none';
-      advisor.textContent = '← Volver a preguntas';
-    });
-  });
-
-  advisor.addEventListener('click', function() {
-    if (this.textContent.includes('←')) {
-      questions.style.display = 'flex';
-      this.textContent = 'Hablar con un especialista →';
-      advisorInfo.style.display = 'none';
-      document.querySelectorAll('.chatbot-message.user').forEach(m => m.remove());
-      document.querySelectorAll('.chatbot-message:not(:first-child)').forEach(m => {
-        if (!m.classList.contains('user')) m.remove();
-      });
+    if (role === 'user') {
+      msg.innerHTML = `<div class="chatbot-text">${text}</div>`;
     } else {
-      advisorInfo.style.display = advisorInfo.style.display === 'block' ? 'none' : 'block';
+      msg.innerHTML = `<div class="chatbot-avatar-box">S</div><div class="chatbot-text">${text}</div>`;
+    }
+
+    chatContent.appendChild(msg);
+    chatContent.scrollTop = chatContent.scrollHeight;
+    return msg;
+  }
+
+  function showTyping() {
+    const typingEl = document.createElement('div');
+    typingEl.className = 'chatbot-message';
+    typingEl.id = 'typingIndicator';
+    typingEl.innerHTML = `
+      <div class="chatbot-avatar-box">S</div>
+      <div class="chatbot-typing">
+        <span></span><span></span><span></span>
+      </div>`;
+    chatContent.appendChild(typingEl);
+    chatContent.scrollTop = chatContent.scrollHeight;
+  }
+
+  function removeTyping() {
+    const el = document.getElementById('typingIndicator');
+    if (el) el.remove();
+  }
+
+  async function sendMessage(text) {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+
+    chatInput.value = '';
+    chatInput.disabled = true;
+    chatSend.disabled = true;
+
+    appendMessage('user', trimmed);
+    chatHistory.push({ role: 'user', content: trimmed });
+
+    showTyping();
+
+    try {
+      const response = await fetch(GROQ_CONFIG.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${GROQ_CONFIG.apiKey}`
+        },
+        body: JSON.stringify({
+          model: GROQ_CONFIG.model,
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            ...chatHistory
+          ],
+          max_tokens: 500,
+          temperature: 0.6
+        })
+      });
+
+      const data = await response.json();
+      removeTyping();
+
+      if (data.choices && data.choices[0]) {
+        const reply = data.choices[0].message.content;
+        chatHistory.push({ role: 'assistant', content: reply });
+        appendMessage('assistant', reply);
+      } else {
+        appendMessage('assistant', 'Lo sentimos, hubo un inconveniente al procesar su consulta. Por favor contáctenos directamente a sami@upch.pe o al +51 963 242 281.');
+      }
+    } catch (err) {
+      removeTyping();
+      appendMessage('assistant', 'No fue posible conectarse en este momento. Puede escribirnos directamente a <a href="mailto:sami@upch.pe" style="color:var(--teal)">sami@upch.pe</a> o al <a href="https://wa.me/51963242281" target="_blank" style="color:var(--teal)">+51 963 242 281</a>.');
+    }
+
+    chatInput.disabled = false;
+    chatSend.disabled = false;
+    chatInput.focus();
+  }
+
+  chatSend.addEventListener('click', () => sendMessage(chatInput.value));
+
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(chatInput.value);
     }
   });
 
@@ -1655,7 +1799,7 @@
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry, i) => {
       if (entry.isIntersecting) {
-        entry.target.style.transition = `opacity 0.5s ease ${i * 0.05}s, transform 0.5s ease ${i * 0.05}s`;
+        entry.target.style.transition = `opacity 0.5s ease ${i * 0.06}s, transform 0.5s ease ${i * 0.06}s`;
         entry.target.style.opacity = '1';
         entry.target.style.transform = 'translateY(0)';
         observer.unobserve(entry.target);
@@ -1668,6 +1812,7 @@
     el.style.transform = 'translateY(20px)';
     observer.observe(el);
   });
+
 </script>
 
 </body>
