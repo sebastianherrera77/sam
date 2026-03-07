@@ -819,6 +819,23 @@
       border-radius: 8px;
       border: 1px solid rgba(11,30,45,0.1);
       box-shadow: 0 8px 40px rgba(11,30,45,0.08);
+      position: relative;
+      z-index: 1;
+    }
+
+    .contact-right {
+      position: relative;
+      z-index: 1;
+    }
+
+    .leaflet-pane,
+    .leaflet-top,
+    .leaflet-bottom {
+      z-index: 1 !important;
+    }
+
+    .leaflet-control-container {
+      z-index: 2 !important;
     }
 
     .map-caption {
@@ -878,7 +895,7 @@
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 8px 32px rgba(11,30,45,0.3);
-      transition: all 0.3s; z-index: 99;
+      transition: all 0.3s; z-index: 9999;
       color: var(--gold);
     }
 
@@ -896,7 +913,7 @@
       background: var(--white);
       border-radius: 12px;
       box-shadow: 0 24px 80px rgba(11,30,45,0.25);
-      display: none; flex-direction: column; z-index: 100;
+      display: none; flex-direction: column; z-index: 9999;
       animation: slideUp 0.3s ease-out;
       overflow: hidden;
       border: 1px solid rgba(11,30,45,0.08);
@@ -1615,7 +1632,7 @@
       </button>
     </div>
     <div class="chatbot-input-footer">
-      <a href="mailto:sami@upch.pe" style="color:var(--text-light); font-size:0.7rem; text-decoration:none;">sami@upch.pe</a>
+      <a href="/cdn-cgi/l/email-protection#c3b0a2aeaa83b6b3a0abedb3a6" style="color:var(--text-light); font-size:0.7rem; text-decoration:none;"><span class="__cf_email__" data-cfemail="cbb8aaa6a28bbebba8a3e5bbae">[email&#160;protected]</span></a>
       <span style="color:var(--text-light); font-size:0.7rem;">·</span>
       <a href="https://wa.me/51963242281" target="_blank" style="color:var(--text-light); font-size:0.7rem; text-decoration:none;">+51 963 242 281</a>
     </div>
@@ -1623,7 +1640,7 @@
 </div>
 
 <!-- ── SCRIPTS ── -->
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
   // Map
   const map = L.map('map', { zoomControl: true, scrollWheelZoom: false }).setView([-12.0236, -77.0564], 15);
@@ -1651,9 +1668,9 @@
     endpoint: "https://api.groq.com/openai/v1/chat/completions"
   };
 
-  const SYSTEM_PROMPT = `Eres el asistente virtual de SAMI Oncología, una solución de seguimiento y acompañamiento integral para pacientes oncológicos desarrollada por la Universidad Peruana Cayetano Heredia (UPCH).
+  const SYSTEM_PROMPT = `Eres el asistente virtual de SAMI Oncología, una solución de seguimiento y acompañamiento integral para pacientes oncológicos, creada por un equipo independiente de estudiantes.
 
-Tu rol es atender consultas institucionales de directores, jefes de oncología y personal médico de clínicas y hospitales que están evaluando adoptar SAMI.
+Tu único rol es orientar a visitantes — directores, jefes de oncología o personal médico — sobre cómo funciona SAMI. No estás para persuadir ni para opinar. Solo informas.
 
 Información clave sobre SAMI:
 - Sistema de seguimiento vía WhatsApp, sin apps adicionales para el paciente
@@ -1662,17 +1679,29 @@ Información clave sobre SAMI:
 - Envía alertas automáticas al equipo médico ante riesgo de abandono
 - Dashboard institucional con reportes exportables por paciente y cohorte
 - Implementación en 2-4 semanas, sin cambios en infraestructura existente
-- Desarrollado con protocolos oncológicos validados y supervisión clínica de la UPCH
 - Contacto: sami@upch.pe | WhatsApp: +51 963 242 281
 - Sede: Av. Honorio Delgado 430, San Martín de Porres, Lima, Perú
 
 Instrucciones de comportamiento:
 - Responde siempre en español formal, como representante institucional
-- Sé conciso pero completo — respuestas de 2 a 4 párrafos máximo
-- Si preguntan por precios o tarifas, indica que se coordinan según el tamaño y necesidades de la institución y que pueden contactar al equipo para una propuesta personalizada
+- Sé breve y directo — máximo 3 oraciones o una lista corta de 3 puntos. Nunca te extiendas innecesariamente
+- Cuando pregunten por precios, planes o tarifas, presenta los siguientes planes disponibles:
+
+PLANES DE SAMI ONCOLOGÍA:
+• Starter: $299/mes — Hasta 50 pacientes activos ($5.98/pac.)
+• Growth (RECOMENDADO): $799/mes — Hasta 200 pacientes activos ($4.00/pac.)
+• Pro: $1,499/mes — Hasta 500 pacientes activos ($3.00/pac.)
+• Enterprise: Precio a medida — Pacientes ilimitados
+
+Nota importante: Todos los planes incluyen un setup fee único de $500 a $1,500 USD según el plan.
+Descuento por plan anual: 15% a 20% de ahorro pagando anual.
+Definición de paciente activo: paciente que envía al menos 1 mensaje durante el periodo de facturación mensual.
+Al presentar los planes, sé claro y formal, menciona el descuento anual y sugiere contactar al equipo para el plan Enterprise o para una propuesta personalizada.
 - No inventes datos clínicos ni estadísticas que no se te hayan proporcionado
-- Si la pregunta está fuera del alcance de SAMI, redirecciona amablemente al equipo de contacto
-- No uses emojis ni listas con viñetas en las respuestas — usa prosa formal`;
+- Si preguntan sobre la universidad, institución académica o quiénes son los creadores, responde únicamente: "SAMI es un proyecto desarrollado por un equipo independiente. Para más información puede contactarnos directamente."
+- Si la pregunta está fuera del alcance de SAMI, indica que no puedes orientar sobre ese tema y deriva al contacto
+- No opines, no elogies, no persuadas — solo informa con neutralidad
+- No uses emojis. Puedes usar listas cortas solo cuando ayuden a la claridad`;
 
   const chatHistory = [];
 
