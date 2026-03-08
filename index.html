@@ -6,850 +6,1144 @@
   <title>SAMI Oncología · Sistema de Acompañamiento y Seguimiento Integral</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 
   <style>
     :root {
-      --navy: #0B1E2D;
-      --navy-mid: #112840;
-      --navy-light: #1A3A52;
-      --gold: #C8A96E;
-      --gold-light: #DFC08A;
-      --teal: #2A8AB5;
-      --teal-light: #3AAED4;
+      --ink: #08141C;
+      --ink-80: rgba(8,20,28,0.8);
+      --ink-40: rgba(8,20,28,0.4);
+      --ink-10: rgba(8,20,28,0.1);
+      --gold: #B8965A;
+      --gold-bright: #D4AF72;
+      --gold-dim: rgba(184,150,90,0.15);
+      --teal: #1E7A8C;
+      --teal-bright: #25A0B8;
+      --cream: #F7F4EF;
       --white: #FFFFFF;
-      --off-white: #F5F3EF;
-      --text-dark: #0B1E2D;
-      --text-mid: #3A5469;
-      --text-light: #6A8CA0;
-      --border: rgba(200, 169, 110, 0.2);
-      --border-teal: rgba(42, 138, 181, 0.2);
+      --mid: #4A6470;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; font-size: 16px; }
+    html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--white);
-      color: var(--text-dark);
+      font-family: 'Outfit', sans-serif;
+      background: var(--ink);
+      color: var(--white);
       overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* ── CUSTOM CURSOR ── */
+    .cursor {
+      position: fixed;
+      width: 8px; height: 8px;
+      background: var(--gold);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 99999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.1s, width 0.3s, height 0.3s, background 0.3s;
+      mix-blend-mode: difference;
+    }
+
+    .cursor-ring {
+      position: fixed;
+      width: 36px; height: 36px;
+      border: 1px solid rgba(184,150,90,0.5);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 99998;
+      transform: translate(-50%, -50%);
+      transition: width 0.3s, height 0.3s;
+    }
+
+    body:hover .cursor { opacity: 1; }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9998;
+      opacity: 0.4;
     }
 
     /* ── NAV ── */
     nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
-      padding: 0 4rem;
-      height: 72px;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+      padding: 0 5rem;
+      height: 68px;
       display: flex; align-items: center; justify-content: space-between;
-      background: rgba(11, 30, 45, 0.96);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(200, 169, 110, 0.15);
+      transition: all 0.4s ease;
+    }
+
+    nav.scrolled {
+      background: rgba(8,20,28,0.92);
+      backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(184,150,90,0.1);
     }
 
     .nav-brand {
-      display: flex; align-items: center; gap: 14px;
+      display: flex; align-items: center; gap: 12px;
       text-decoration: none;
+      opacity: 0;
+      animation: fadeDown 0.8s 0.2s forwards;
     }
 
-    .nav-logo-mark {
-      width: 36px; height: 36px;
-      border: 1.5px solid var(--gold);
-      border-radius: 8px;
+    .nav-mark {
+      width: 32px; height: 32px;
+      border: 1px solid var(--gold);
       display: flex; align-items: center; justify-content: center;
-      font-family: 'DM Serif Display', serif;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      color: var(--gold);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nav-mark::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--gold);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s ease;
+    }
+
+    .nav-brand:hover .nav-mark::after { transform: scaleX(1); }
+    .nav-brand:hover .nav-mark span { color: var(--ink); position: relative; z-index: 1; }
+
+    .nav-mark span { position: relative; z-index: 1; transition: color 0.4s; }
+
+    .nav-name {
+      font-family: 'Cormorant Garamond', serif;
       font-size: 1.1rem;
-      color: var(--gold);
-      letter-spacing: -0.02em;
-    }
-
-    .nav-brand-text {
-      display: flex; flex-direction: column; line-height: 1.1;
-    }
-
-    .nav-brand-name {
-      font-family: 'DM Serif Display', serif;
-      font-size: 1.05rem;
+      font-weight: 400;
       color: var(--white);
-      letter-spacing: 0.02em;
-    }
-
-    .nav-brand-sub {
-      font-size: 0.62rem;
-      color: var(--gold);
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      font-weight: 500;
+      letter-spacing: 0.06em;
     }
 
     .nav-links {
       display: flex; gap: 2.5rem; list-style: none;
+      opacity: 0;
+      animation: fadeDown 0.8s 0.4s forwards;
     }
 
     .nav-links a {
       text-decoration: none;
-      color: rgba(255,255,255,0.65);
-      font-size: 0.82rem;
+      color: rgba(255,255,255,0.45);
+      font-size: 0.75rem;
       font-weight: 500;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
       transition: color 0.3s;
+      position: relative;
     }
 
-    .nav-links a:hover { color: var(--gold); }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -3px; left: 0;
+      width: 0; height: 1px;
+      background: var(--gold);
+      transition: width 0.3s ease;
+    }
+
+    .nav-links a:hover { color: var(--white); }
+    .nav-links a:hover::after { width: 100%; }
 
     .nav-cta {
       display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 26px;
-      background: transparent;
-      border: 1.5px solid var(--gold);
-      border-radius: 4px;
+      padding: 9px 22px;
+      border: 1px solid rgba(184,150,90,0.5);
       color: var(--gold);
-      font-size: 0.78rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
       text-decoration: none;
-      transition: all 0.3s;
+      transition: all 0.35s ease;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      animation: fadeDown 0.8s 0.6s forwards;
     }
 
-    .nav-cta:hover {
+    .nav-cta::before {
+      content: '';
+      position: absolute; inset: 0;
       background: var(--gold);
-      color: var(--navy);
+      transform: translateX(-101%);
+      transition: transform 0.35s ease;
+    }
+
+    .nav-cta:hover::before { transform: translateX(0); }
+    .nav-cta:hover { color: var(--ink); }
+    .nav-cta span { position: relative; z-index: 1; }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     /* ── HERO ── */
     .hero {
       min-height: 100vh;
-      background: var(--navy);
       display: flex; align-items: center;
       position: relative;
       overflow: hidden;
-      padding: 0 4rem;
+      padding: 0 5rem;
     }
 
-    .hero-bg-lines {
+    /* Animated grid */
+    .hero-grid {
       position: absolute; inset: 0;
       background-image:
-        linear-gradient(rgba(200, 169, 110, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(200, 169, 110, 0.04) 1px, transparent 1px);
-      background-size: 80px 80px;
+        linear-gradient(rgba(184,150,90,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(184,150,90,0.025) 1px, transparent 1px);
+      background-size: 100px 100px;
     }
 
-    .hero-glow {
+    /* Wave canvas */
+    #waveCanvas {
       position: absolute;
-      width: 700px; height: 700px;
-      background: radial-gradient(circle, rgba(42, 138, 181, 0.12) 0%, transparent 65%);
-      top: -100px; right: -150px;
+      bottom: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      opacity: 0.55;
+    }
+
+    /* Glowing orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
       pointer-events: none;
     }
 
-    .hero-glow-2 {
-      position: absolute;
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, rgba(200, 169, 110, 0.07) 0%, transparent 65%);
-      bottom: 0; left: 15%;
-      pointer-events: none;
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(30,122,140,0.12) 0%, transparent 70%);
+      top: -80px; right: -80px;
+      animation: orbFloat 10s ease-in-out infinite;
+    }
+
+    .orb-2 {
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, rgba(184,150,90,0.07) 0%, transparent 70%);
+      bottom: 15%; left: 3%;
+      animation: orbFloat 14s ease-in-out infinite reverse;
+    }
+
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(20px, -15px); }
     }
 
     .hero-inner {
       position: relative; z-index: 2;
       max-width: 1200px; margin: 0 auto; width: 100%;
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 6rem; align-items: center;
-      padding-top: 72px;
+      padding-top: 68px;
+      display: grid; grid-template-columns: 1.1fr 0.9fr;
+      gap: 5rem; align-items: center;
     }
 
     .hero-left {}
 
-    .hero-eyebrow {
+    .hero-tag {
       display: inline-flex; align-items: center; gap: 10px;
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      animation: fadeUp 1s 0.5s forwards;
+    }
+
+    .hero-tag-dot {
+      width: 6px; height: 6px;
+      background: var(--teal-bright);
+      border-radius: 50%;
+      animation: blink 2s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .hero-tag-text {
+      font-size: 0.68rem;
+      font-weight: 500;
+      color: var(--teal-bright);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3rem, 5.5vw, 5rem);
+      font-weight: 300;
+      line-height: 1.05;
+      color: var(--white);
       margin-bottom: 2rem;
+      overflow: hidden;
     }
 
-    .hero-eyebrow-line {
-      width: 32px; height: 1px;
+    .hero-title-line {
+      display: block;
+      opacity: 0;
+      transform: translateY(60px);
+      animation: lineReveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .hero-title-line:nth-child(1) { animation-delay: 0.7s; }
+    .hero-title-line:nth-child(2) { animation-delay: 0.85s; }
+    .hero-title-line:nth-child(3) { animation-delay: 1s; }
+
+    @keyframes lineReveal {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--gold-bright);
+    }
+
+    .hero-desc {
+      font-size: 0.95rem;
+      line-height: 1.9;
+      color: rgba(255,255,255,0.45);
+      font-weight: 300;
+      max-width: 460px;
+      margin-bottom: 3rem;
+      opacity: 0;
+      animation: fadeUp 1s 1.2s forwards;
+    }
+
+    .hero-actions {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp 1s 1.4s forwards;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 32px;
       background: var(--gold);
+      color: var(--ink);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: all 0.35s ease;
+      position: relative;
+      overflow: hidden;
     }
 
-    .hero-eyebrow-text {
-      font-size: 0.7rem;
+    .btn-primary::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--gold-bright);
+      transform: translateX(-101%);
+      transition: transform 0.35s ease;
+    }
+
+    .btn-primary:hover::after { transform: translateX(0); }
+    .btn-primary span, .btn-primary svg { position: relative; z-index: 1; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 20px 40px rgba(184,150,90,0.2); }
+
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 32px;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.6);
+      font-size: 0.78rem;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.35); color: var(--white); }
+
+    /* Hero right panel */
+    .hero-panel {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      padding: 2.5rem;
+      position: relative;
+      opacity: 0;
+      animation: fadeUp 1s 1.1s forwards;
+    }
+
+    .hero-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--teal), var(--gold));
+    }
+
+    .panel-label {
+      font-size: 0.62rem;
+      font-weight: 600;
+      color: var(--gold);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .panel-stats {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+
+    .panel-stat {
+      padding: 1.5rem;
+      border-right: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .panel-stat:nth-child(2n) { border-right: none; }
+    .panel-stat:nth-child(3), .panel-stat:nth-child(4) { border-bottom: none; }
+
+    .panel-stat-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.4rem;
+      font-weight: 300;
+      color: var(--white);
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+
+    .panel-stat-num sup {
+      font-size: 1rem;
+      color: var(--gold);
+      vertical-align: super;
+    }
+
+    .panel-stat-label {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.35);
+      font-weight: 300;
+      line-height: 1.5;
+    }
+
+    .panel-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 1.5rem 0; }
+
+    .panel-list { display: flex; flex-direction: column; gap: 0.7rem; }
+
+    .panel-list-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.4);
+      font-weight: 300;
+      line-height: 1.5;
+    }
+
+    .panel-list-item::before {
+      content: '';
+      width: 4px; height: 4px;
+      background: var(--teal-bright);
+      border-radius: 50%;
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+
+    /* ── SCROLL LINE ── */
+    .scroll-line {
+      position: absolute;
+      bottom: 3rem; left: 5rem;
+      display: flex; align-items: center; gap: 12px;
+      opacity: 0;
+      animation: fadeUp 1s 1.8s forwards;
+    }
+
+    .scroll-line-bar {
+      width: 40px; height: 1px;
+      background: rgba(255,255,255,0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scroll-line-bar::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: var(--gold);
+      animation: scanLine 2s ease-in-out infinite;
+    }
+
+    @keyframes scanLine {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+
+    .scroll-line-text {
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.25);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    /* ── TRUST STRIP ── */
+    .trust-strip {
+      background: rgba(255,255,255,0.02);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 1.5rem 5rem;
+      display: flex; align-items: center; gap: 2.5rem; overflow: hidden;
+    }
+
+    .trust-label {
+      font-size: 0.62rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .trust-sep { width: 1px; height: 20px; background: rgba(255,255,255,0.08); flex-shrink: 0; }
+
+    .trust-logos { display: flex; gap: 3rem; align-items: center; }
+
+    .trust-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      transition: color 0.3s;
+    }
+
+    .trust-logo:hover { color: rgba(255,255,255,0.5); }
+
+    /* ── SECTIONS ── */
+    section { padding: 9rem 5rem; position: relative; }
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .eyebrow-line { width: 28px; height: 1px; background: var(--gold); }
+
+    .eyebrow-text {
+      font-size: 0.62rem;
       font-weight: 600;
       color: var(--gold);
       letter-spacing: 0.18em;
       text-transform: uppercase;
     }
 
-    .hero-title {
-      font-family: 'DM Serif Display', serif;
-      font-size: clamp(2.4rem, 4vw, 3.6rem);
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.2rem, 3.5vw, 3.5rem);
+      font-weight: 300;
       line-height: 1.12;
       color: var(--white);
-      margin-bottom: 1.6rem;
     }
 
-    .hero-title em {
-      font-style: italic;
-      color: var(--gold);
-    }
-
-    .hero-desc {
-      font-size: 1rem;
-      line-height: 1.85;
-      color: rgba(255,255,255,0.58);
-      margin-bottom: 2.8rem;
-      max-width: 480px;
-      font-weight: 300;
-    }
-
-    .hero-actions {
-      display: flex; gap: 1rem; flex-wrap: wrap;
-    }
-
-    .btn-hero-primary {
-      display: inline-flex; align-items: center; gap: 10px;
-      padding: 15px 34px;
-      background: var(--gold);
-      color: var(--navy);
-      border: none;
-      border-radius: 4px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      text-decoration: none;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .btn-hero-primary:hover {
-      background: var(--gold-light);
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(200, 169, 110, 0.25);
-    }
-
-    .btn-hero-secondary {
-      display: inline-flex; align-items: center; gap: 10px;
-      padding: 15px 34px;
-      background: transparent;
-      color: rgba(255,255,255,0.7);
-      border: 1px solid rgba(255,255,255,0.18);
-      border-radius: 4px;
-      font-size: 0.82rem;
-      font-weight: 500;
-      letter-spacing: 0.04em;
-      text-decoration: none;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .btn-hero-secondary:hover {
-      border-color: rgba(255,255,255,0.4);
-      color: var(--white);
-    }
-
-    /* Hero right - stat panel */
-    .hero-panel {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(200, 169, 110, 0.15);
-      border-radius: 12px;
-      padding: 2.5rem;
-      backdrop-filter: blur(10px);
-    }
-
-    .hero-panel-title {
-      font-size: 0.68rem;
-      font-weight: 600;
-      color: var(--gold);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      margin-bottom: 2rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid rgba(200,169,110,0.15);
-    }
-
-    .panel-stats {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .panel-stat {}
-
-    .panel-stat-num {
-      font-family: 'DM Serif Display', serif;
-      font-size: 2.2rem;
-      color: var(--white);
-      line-height: 1;
-      margin-bottom: 0.4rem;
-    }
-
-    .panel-stat-num span {
-      color: var(--gold);
-    }
-
-    .panel-stat-label {
-      font-size: 0.75rem;
-      color: rgba(255,255,255,0.45);
-      font-weight: 400;
-      line-height: 1.4;
-    }
-
-    .panel-divider {
-      height: 1px;
-      background: rgba(200,169,110,0.1);
-      margin: 1.5rem 0;
-    }
-
-    .panel-features {
-      display: flex; flex-direction: column; gap: 0.8rem;
-    }
-
-    .panel-feature {
-      display: flex; align-items: center; gap: 12px;
-      font-size: 0.82rem;
-      color: rgba(255,255,255,0.55);
-      font-weight: 400;
-    }
-
-    .panel-feature-dot {
-      width: 6px; height: 6px;
-      background: var(--teal-light);
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    /* ── INSTITUCIONES STRIP ── */
-    .trust-strip {
-      background: var(--off-white);
-      padding: 1.8rem 4rem;
-      display: flex;
-      align-items: center;
-      gap: 3rem;
-      border-bottom: 1px solid rgba(11,30,45,0.08);
-    }
-
-    .trust-label {
-      font-size: 0.68rem;
-      font-weight: 600;
-      color: var(--text-light);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    .trust-divider {
-      width: 1px; height: 28px;
-      background: rgba(11,30,45,0.12);
-      flex-shrink: 0;
-    }
-
-    .trust-logos {
-      display: flex; align-items: center; gap: 3rem; flex-wrap: wrap;
-    }
-
-    .trust-logo {
-      font-family: 'DM Serif Display', serif;
-      font-size: 0.85rem;
-      color: rgba(11,30,45,0.35);
-      letter-spacing: 0.04em;
-      white-space: nowrap;
-    }
-
-    /* ── SECTIONS BASE ── */
-    section { padding: 7rem 4rem; position: relative; }
-    .container { max-width: 1200px; margin: 0 auto; }
-
-    .section-eyebrow {
-      display: inline-flex; align-items: center; gap: 10px;
-      margin-bottom: 1.4rem;
-    }
-
-    .section-eyebrow-line {
-      width: 24px; height: 1px;
-      background: var(--gold);
-    }
-
-    .section-eyebrow-text {
-      font-size: 0.68rem;
-      font-weight: 600;
-      color: var(--gold);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-    }
-
-    .section-title {
-      font-family: 'DM Serif Display', serif;
-      font-size: clamp(1.9rem, 3vw, 2.8rem);
-      color: var(--text-dark);
-      line-height: 1.18;
-      margin-bottom: 1rem;
-    }
-
-    .section-title em { font-style: italic; color: var(--teal); }
+    .section-title em { font-style: italic; color: var(--gold-bright); }
+    .section-title.dark { color: var(--ink); }
+    .section-title.dark em { color: var(--teal); }
 
     .section-body {
-      font-size: 0.95rem;
-      color: var(--text-mid);
-      line-height: 1.85;
+      font-size: 0.9rem;
+      line-height: 1.9;
+      color: rgba(255,255,255,0.4);
       font-weight: 300;
-      max-width: 560px;
     }
 
-    /* ── PROBLEMA / PROPUESTA ── */
-    .problem-section {
-      background: var(--navy);
-      color: var(--white);
-    }
+    .section-body.dark { color: var(--mid); }
 
-    .problem-section .section-title { color: var(--white); }
-    .problem-section .section-title em { color: var(--gold); }
-    .problem-section .section-body { color: rgba(255,255,255,0.55); }
+    /* ── PROBLEMA ── */
+    .problema { background: var(--ink); }
 
-    .problem-grid {
+    .problema-grid {
       display: grid; grid-template-columns: 1fr 1fr;
-      gap: 5rem; align-items: center;
-      margin-top: 4rem;
+      gap: 6rem; align-items: center;
+      margin-top: 5rem;
     }
 
-    .problem-stats {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 2px;
-    }
-
-    .problem-stat-box {
+    .stat-blocks {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
       background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(200,169,110,0.1);
-      padding: 2.5rem 2rem;
+    }
+
+    .stat-block {
+      background: var(--ink);
+      padding: 3rem 2rem;
       text-align: center;
+      transition: background 0.4s;
+      position: relative;
+      overflow: hidden;
     }
 
-    .problem-stat-box:first-child { border-radius: 12px 0 0 0; }
-    .problem-stat-box:nth-child(2) { border-radius: 0 12px 0 0; }
-    .problem-stat-box:nth-child(3) { border-radius: 0 0 0 12px; }
-    .problem-stat-box:last-child { border-radius: 0 0 12px 0; }
+    .stat-block::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(30,122,140,0.06), rgba(184,150,90,0.06));
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
 
-    .problem-stat-num {
-      font-family: 'DM Serif Display', serif;
-      font-size: 2.8rem;
-      color: var(--gold);
+    .stat-block:hover::before { opacity: 1; }
+
+    .stat-block-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3.5rem;
+      font-weight: 300;
+      color: var(--gold-bright);
       display: block;
-      margin-bottom: 0.5rem;
+      line-height: 1;
+      margin-bottom: 0.8rem;
     }
 
-    .problem-stat-label {
-      font-size: 0.8rem;
-      color: rgba(255,255,255,0.45);
-      line-height: 1.5;
+    .stat-block-label {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.3);
+      line-height: 1.6;
       font-weight: 300;
     }
 
-    .problem-right {}
+    .problema-points { display: flex; flex-direction: column; gap: 2.5rem; }
 
-    .problem-points {
-      display: flex; flex-direction: column; gap: 2rem;
-      margin-top: 1rem;
+    .problema-point {
+      display: flex; gap: 1.5rem;
+      padding-bottom: 2.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
     }
 
-    .problem-point {
-      display: flex; gap: 1.2rem; align-items: flex-start;
-    }
+    .problema-point:last-child { border-bottom: none; padding-bottom: 0; }
 
-    .problem-point-num {
-      font-family: 'DM Serif Display', serif;
-      font-size: 1.8rem;
-      color: rgba(200,169,110,0.2);
+    .problema-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 300;
+      color: rgba(184,150,90,0.15);
       line-height: 1;
       flex-shrink: 0;
-      width: 32px;
+      width: 28px;
     }
 
-    .problem-point-text h4 {
+    .problema-point h4 {
       font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--white);
-      margin-bottom: 0.4rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.01em;
     }
 
-    .problem-point-text p {
-      font-size: 0.85rem;
-      color: rgba(255,255,255,0.45);
-      line-height: 1.7;
+    .problema-point p {
+      font-size: 0.83rem;
+      color: rgba(255,255,255,0.35);
+      line-height: 1.75;
       font-weight: 300;
     }
 
     /* ── DIMENSIONES ── */
-    .dimensions-section {
-      background: var(--off-white);
-    }
+    .dimensiones { background: var(--cream); }
 
     .dim-header {
-      display: flex; justify-content: space-between; align-items: flex-end;
-      margin-bottom: 3.5rem;
-      flex-wrap: wrap; gap: 2rem;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 4rem; align-items: end;
+      margin-bottom: 4rem;
     }
 
     .dim-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.5px;
-      background: rgba(11,30,45,0.08);
-      border-radius: 12px;
-      overflow: hidden;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: rgba(8,20,28,0.08);
     }
 
     .dim-card {
-      background: var(--white);
-      padding: 2.8rem 2.2rem;
-      transition: all 0.35s ease;
-      cursor: default;
+      background: var(--cream);
+      padding: 3rem 2.2rem;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       overflow: hidden;
     }
 
-    .dim-card::before {
+    .dim-card::after {
       content: '';
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      height: 3px;
+      height: 2px;
       background: linear-gradient(90deg, var(--teal), var(--gold));
       transform: scaleX(0);
       transform-origin: left;
-      transition: transform 0.4s ease;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .dim-card:hover::before { transform: scaleX(1); }
+    .dim-card:hover::after { transform: scaleX(1); }
+    .dim-card:hover { background: var(--ink); }
+    .dim-card:hover .dim-title { color: var(--white); }
+    .dim-card:hover .dim-desc { color: rgba(255,255,255,0.4); }
+    .dim-card:hover .dim-icon-wrap { border-color: rgba(184,150,90,0.3); background: rgba(184,150,90,0.08); }
+    .dim-card:hover .dim-icon { color: var(--gold); }
 
-    .dim-card:hover {
-      background: var(--navy);
-    }
-
-    .dim-card:hover .dim-card-title { color: var(--white); }
-    .dim-card:hover .dim-card-desc { color: rgba(255,255,255,0.5); }
-    .dim-card:hover .dim-icon-box { background: rgba(200,169,110,0.12); border-color: rgba(200,169,110,0.3); }
-    .dim-card:hover .dim-icon-svg { color: var(--gold); }
-
-    .dim-icon-box {
-      width: 52px; height: 52px;
-      border-radius: 10px;
-      border: 1px solid rgba(42, 138, 181, 0.2);
-      background: rgba(42, 138, 181, 0.07);
+    .dim-icon-wrap {
+      width: 48px; height: 48px;
+      border: 1px solid rgba(30,122,140,0.2);
+      background: rgba(30,122,140,0.06);
       display: flex; align-items: center; justify-content: center;
       margin-bottom: 1.5rem;
-      transition: all 0.35s;
+      transition: all 0.4s;
     }
 
-    .dim-icon-svg {
-      color: var(--teal);
-      transition: color 0.35s;
-    }
+    .dim-icon { color: var(--teal); transition: color 0.4s; }
 
-    .dim-card-title {
-      font-size: 1rem;
+    .dim-title {
+      font-size: 0.92rem;
       font-weight: 600;
-      color: var(--text-dark);
-      margin-bottom: 0.6rem;
-      transition: color 0.35s;
+      color: var(--ink);
+      margin-bottom: 0.7rem;
+      letter-spacing: 0.01em;
+      transition: color 0.4s;
     }
 
-    .dim-card-desc {
-      font-size: 0.83rem;
-      color: var(--text-mid);
-      line-height: 1.75;
+    .dim-desc {
+      font-size: 0.8rem;
+      color: var(--mid);
+      line-height: 1.8;
       font-weight: 300;
-      transition: color 0.35s;
+      transition: color 0.4s;
     }
 
     /* ── PROCESO ── */
-    .process-section {
-      background: var(--white);
-    }
+    .proceso { background: var(--ink); }
 
-    .process-header {
-      text-align: center;
-      margin-bottom: 5rem;
-    }
+    .proceso-header { text-align: center; margin-bottom: 6rem; }
+    .proceso-header .section-body { margin: 0 auto; max-width: 480px; }
 
-    .process-header .section-body {
-      margin: 0 auto;
-      text-align: center;
-    }
-
-    .process-timeline {
-      position: relative;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    .process-line {
-      position: absolute;
-      top: 38px;
-      left: calc(10% + 38px);
-      right: calc(10% + 38px);
-      height: 1px;
-      background: linear-gradient(90deg, var(--teal) 0%, var(--gold) 100%);
-      opacity: 0.25;
-    }
-
-    .process-steps {
-      display: flex;
+    .proceso-steps {
+      display: flex; position: relative;
       justify-content: space-between;
-      gap: 1rem;
+      max-width: 1000px; margin: 0 auto;
     }
 
-    .process-step {
+    .proceso-steps::before {
+      content: '';
+      position: absolute;
+      top: 36px; left: 80px; right: 80px;
+      height: 1px;
+      background: linear-gradient(90deg,
+        transparent,
+        rgba(184,150,90,0.2) 20%,
+        rgba(30,122,140,0.3) 50%,
+        rgba(184,150,90,0.2) 80%,
+        transparent
+      );
+    }
+
+    .proceso-step {
       flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      display: flex; flex-direction: column; align-items: center;
       text-align: center;
+      padding: 0 0.5rem;
     }
 
-    .process-step-num {
-      width: 76px; height: 76px;
-      border-radius: 50%;
-      border: 1.5px solid var(--border-teal);
-      background: var(--white);
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 1.5rem;
-      position: relative;
-      z-index: 2;
-      transition: all 0.3s;
-    }
-
-    .process-step:hover .process-step-num {
-      border-color: var(--teal);
-      background: var(--navy);
-    }
-
-    .process-step:hover .process-step-inner { color: var(--white); }
-
-    .process-step-inner {
-      font-family: 'DM Serif Display', serif;
-      font-size: 1.6rem;
-      color: var(--teal);
-      transition: color 0.3s;
-    }
-
-    .process-step h3 {
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: var(--text-dark);
-      margin-bottom: 0.5rem;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
-      font-size: 0.75rem;
-    }
-
-    .process-step p {
-      font-size: 0.82rem;
-      color: var(--text-light);
-      line-height: 1.65;
-      font-weight: 300;
-    }
-
-    /* ── BENEFICIOS INSTITUCIONALES ── */
-    .benefits-section {
-      background: var(--navy);
-      padding: 7rem 4rem;
-    }
-
-    .benefits-section .section-title { color: var(--white); }
-    .benefits-section .section-title em { color: var(--gold); }
-
-    .benefits-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 3rem; margin-top: 4rem;
-    }
-
-    .benefit-item {
-      display: flex; gap: 1.5rem;
-      padding: 2.2rem;
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 8px;
-      transition: all 0.3s;
-    }
-
-    .benefit-item:hover {
-      border-color: rgba(200,169,110,0.2);
-      background: rgba(255,255,255,0.02);
-    }
-
-    .benefit-icon {
-      width: 48px; height: 48px;
-      border-radius: 8px;
-      background: rgba(200,169,110,0.1);
-      border: 1px solid rgba(200,169,110,0.2);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      color: var(--gold);
-    }
-
-    .benefit-text h4 {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--white);
-      margin-bottom: 0.5rem;
-    }
-
-    .benefit-text p {
-      font-size: 0.83rem;
-      color: rgba(255,255,255,0.45);
-      line-height: 1.7;
-      font-weight: 300;
-    }
-
-    /* ── UPCH ── */
-    .upch-section {
-      background: var(--off-white);
-      padding: 5rem 4rem;
-    }
-
-    .upch-inner {
-      max-width: 1200px; margin: 0 auto;
-      display: flex; align-items: center; gap: 5rem;
-    }
-
-    .upch-badge {
-      flex-shrink: 0;
-      width: 120px; height: 120px;
-      border: 2px solid var(--gold);
+    .paso-circle {
+      width: 72px; height: 72px;
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      flex-direction: column;
-      text-align: center;
-      padding: 1rem;
+      margin-bottom: 1.8rem;
+      position: relative; z-index: 2;
+      background: var(--ink);
+      transition: all 0.4s;
     }
 
-    .upch-badge-main {
-      font-family: 'DM Serif Display', serif;
-      font-size: 1rem;
-      color: var(--navy);
-      line-height: 1.2;
+    .proceso-step:hover .paso-circle {
+      border-color: var(--gold);
+      background: rgba(184,150,90,0.08);
+      transform: scale(1.1);
     }
 
-    .upch-badge-year {
-      font-size: 0.65rem;
-      color: var(--gold);
-      letter-spacing: 0.12em;
-      font-weight: 600;
-      text-transform: uppercase;
-      margin-top: 4px;
-    }
-
-    .upch-text h3 {
-      font-family: 'DM Serif Display', serif;
+    .paso-num {
+      font-family: 'Cormorant Garamond', serif;
       font-size: 1.6rem;
-      color: var(--text-dark);
-      margin-bottom: 0.8rem;
-    }
-
-    .upch-text p {
-      font-size: 0.9rem;
-      color: var(--text-mid);
-      line-height: 1.8;
       font-weight: 300;
-      max-width: 620px;
+      color: rgba(255,255,255,0.25);
+      transition: color 0.4s;
     }
 
-    /* ── CONTACTO ── */
-    .contact-section {
-      background: var(--white);
-      padding: 7rem 4rem;
-    }
+    .proceso-step:hover .paso-num { color: var(--gold-bright); }
 
-    .contact-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 6rem; align-items: start;
-      margin-top: 4rem;
-    }
-
-    .contact-left {}
-
-    .contact-info-items {
-      display: flex; flex-direction: column; gap: 1.5rem;
-      margin-bottom: 3rem;
-    }
-
-    .contact-info-item {
-      display: flex; gap: 1.2rem; align-items: center;
-      text-decoration: none;
-      padding: 1.2rem 1.5rem;
-      border: 1px solid rgba(11,30,45,0.08);
-      border-radius: 8px;
-      transition: all 0.3s;
-    }
-
-    .contact-info-item:hover {
-      border-color: var(--teal);
-      background: rgba(42, 138, 181, 0.03);
-    }
-
-    .contact-info-icon {
-      width: 42px; height: 42px;
-      background: var(--navy);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      color: var(--gold);
-    }
-
-    .contact-info-label {
-      font-size: 0.68rem;
+    .paso-title {
+      font-size: 0.72rem;
       font-weight: 600;
-      color: var(--text-light);
+      color: rgba(255,255,255,0.5);
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      margin-bottom: 3px;
+      margin-bottom: 0.7rem;
+      transition: color 0.4s;
     }
 
-    .contact-info-value {
-      font-size: 0.88rem;
-      color: var(--text-dark);
+    .proceso-step:hover .paso-title { color: var(--white); }
+
+    .paso-desc {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.25);
+      line-height: 1.75;
+      font-weight: 300;
+      transition: color 0.4s;
+    }
+
+    .proceso-step:hover .paso-desc { color: rgba(255,255,255,0.45); }
+
+    /* ── BENEFICIOS ── */
+    .beneficios { background: var(--ink); border-top: 1px solid rgba(255,255,255,0.04); }
+
+    .beneficios-layout {
+      display: grid; grid-template-columns: 0.8fr 1.2fr;
+      gap: 7rem; align-items: start;
+      margin-top: 5rem;
+    }
+
+    .beneficios-left {}
+
+    .beneficios-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: rgba(255,255,255,0.04);
+    }
+
+    .beneficio {
+      background: var(--ink);
+      padding: 2.5rem 2rem;
+      transition: background 0.4s;
+    }
+
+    .beneficio:hover { background: rgba(255,255,255,0.02); }
+
+    .beneficio-icon {
+      width: 40px; height: 40px;
+      border: 1px solid rgba(184,150,90,0.2);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1.2rem;
+      color: var(--gold);
+      transition: all 0.4s;
+    }
+
+    .beneficio:hover .beneficio-icon {
+      background: rgba(184,150,90,0.08);
+      border-color: rgba(184,150,90,0.4);
+    }
+
+    .beneficio h4 {
+      font-size: 0.85rem;
       font-weight: 500;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 0.5rem;
+      line-height: 1.4;
     }
 
-    .contact-right {}
+    .beneficio p {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.3);
+      line-height: 1.75;
+      font-weight: 300;
+    }
+
+    /* ── PLANES ── */
+    .planes { background: var(--cream); }
+
+    .planes-header { text-align: center; margin-bottom: 4rem; }
+
+    .planes-toggle {
+      display: inline-flex; align-items: center; gap: 0;
+      border: 1px solid rgba(8,20,28,0.12);
+      overflow: hidden;
+      margin: 0 auto 4rem;
+    }
+
+    .toggle-btn {
+      padding: 10px 24px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--mid);
+      transition: all 0.3s;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .toggle-btn.active {
+      background: var(--ink);
+      color: var(--gold);
+    }
+
+    .planes-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: rgba(8,20,28,0.08);
+    }
+
+    .plan-card {
+      background: var(--cream);
+      padding: 2.5rem 2rem;
+      position: relative;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      border-top: 2px solid transparent;
+    }
+
+    .plan-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(160deg, rgba(184,150,90,0.06) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.35s;
+      pointer-events: none;
+    }
+
+    .plan-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(8,20,28,0.12);
+      border-top-color: var(--gold);
+    }
+
+    .plan-card:hover::before { opacity: 1; }
+
+    .plan-card.featured {
+      background: var(--ink);
+      border-top-color: var(--gold);
+    }
+
+    .plan-card.featured:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 50px rgba(8,20,28,0.35);
+    }
+
+    .plan-card.featured::before {
+      background: linear-gradient(160deg, rgba(184,150,90,0.08) 0%, transparent 60%);
+    }
+
+    .plan-card.featured:hover::before { opacity: 1; }
+
+    .plan-card.featured .plan-name { color: var(--white); }
+    .plan-card.featured .plan-price { color: var(--white); }
+    .plan-card.featured .plan-period { color: rgba(255,255,255,0.4); }
+    .plan-card.featured .plan-feature { color: rgba(255,255,255,0.5); border-color: rgba(255,255,255,0.06); }
+    .plan-card.featured .plan-feature::before { background: var(--gold); }
+
+    .plan-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: var(--gold);
+      color: var(--ink);
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .plan-name {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--ink);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .plan-price {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3rem;
+      font-weight: 300;
+      color: var(--ink);
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+
+    .plan-price sup {
+      font-size: 1.2rem;
+      vertical-align: super;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+    }
+
+    .plan-period {
+      font-size: 0.75rem;
+      color: var(--mid);
+      margin-bottom: 0.5rem;
+    }
+
+    .plan-per-pac {
+      font-size: 0.72rem;
+      color: var(--teal);
+      font-weight: 500;
+      margin-bottom: 2rem;
+    }
+
+    .plan-divider { height: 1px; background: rgba(8,20,28,0.08); margin-bottom: 1.5rem; }
+    .plan-card.featured .plan-divider { background: rgba(255,255,255,0.06); }
+
+    .plan-features { display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 2rem; }
+
+    .plan-feature {
+      font-size: 0.78rem;
+      color: var(--mid);
+      display: flex; align-items: flex-start; gap: 10px;
+      padding-bottom: 0.7rem;
+      border-bottom: 1px solid rgba(8,20,28,0.05);
+      font-weight: 300;
+      line-height: 1.5;
+    }
+
+    .plan-feature:last-child { border-bottom: none; padding-bottom: 0; }
+
+    .plan-feature::before {
+      content: '';
+      width: 4px; height: 4px;
+      background: var(--teal);
+      border-radius: 50%;
+      margin-top: 7px;
+      flex-shrink: 0;
+    }
+
+    .plan-cta {
+      display: block;
+      padding: 11px;
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid rgba(8,20,28,0.15);
+      color: var(--ink);
+      transition: all 0.3s;
+    }
+
+    .plan-card.featured .plan-cta {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--ink);
+    }
+
+    .plan-cta:hover { background: var(--ink); color: var(--white); border-color: var(--ink); }
+    .plan-card.featured .plan-cta:hover { background: var(--gold-bright); border-color: var(--gold-bright); color: var(--ink); }
+
+    .plan-enterprise-price {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 300;
+      color: var(--ink);
+      margin-bottom: 0.5rem;
+    }
+
+    .planes-note {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.78rem;
+      color: var(--mid);
+      font-weight: 300;
+    }
+
+    .planes-note strong { color: var(--ink); font-weight: 500; }
+
+    /* ── CONTACTO ── */
+    .contacto { background: var(--ink); }
+
+    .contacto-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 7rem; align-items: start;
+      margin-top: 5rem;
+    }
+
+    .contact-items { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 3rem; }
+
+    .contact-item {
+      display: flex; gap: 1rem; align-items: center;
+      padding: 1.2rem 1.5rem;
+      border: 1px solid rgba(255,255,255,0.05);
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+
+    .contact-item:hover { border-color: rgba(184,150,90,0.2); background: rgba(184,150,90,0.03); }
+
+    .contact-icon {
+      width: 38px; height: 38px;
+      border: 1px solid rgba(184,150,90,0.2);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold); flex-shrink: 0;
+      transition: all 0.3s;
+    }
+
+    .contact-item:hover .contact-icon { background: rgba(184,150,90,0.1); }
+
+    .contact-label {
+      font-size: 0.62rem;
+      color: rgba(255,255,255,0.25);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .contact-value {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.7);
+      font-weight: 400;
+    }
+
+    .contact-note {
+      padding: 1.5rem;
+      border-left: 2px solid var(--gold);
+      background: rgba(184,150,90,0.04);
+    }
+
+    .contact-note p {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.4);
+      line-height: 1.75;
+      font-weight: 300;
+    }
+
+    .contact-note strong { color: rgba(255,255,255,0.7); font-weight: 500; }
 
     #map {
-      width: 100%;
-      height: 380px;
-      border-radius: 8px;
-      border: 1px solid rgba(11,30,45,0.1);
-      box-shadow: 0 8px 40px rgba(11,30,45,0.08);
-      position: relative;
-      z-index: 1;
+      width: 100%; height: 360px;
+      position: relative; z-index: 1;
+      filter: grayscale(30%) contrast(1.1);
     }
 
-    .contact-right {
-      position: relative;
-      z-index: 1;
-    }
+    .leaflet-pane, .leaflet-top, .leaflet-bottom { z-index: 1 !important; }
+    .leaflet-control-container { z-index: 2 !important; }
 
-    .leaflet-pane,
-    .leaflet-top,
-    .leaflet-bottom {
-      z-index: 1 !important;
-    }
-
-    .leaflet-control-container {
-      z-index: 2 !important;
-    }
-
-    .map-caption {
-      margin-top: 1rem;
-      font-size: 0.78rem;
-      color: var(--text-light);
+    .map-note {
+      margin-top: 0.8rem;
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.2);
       display: flex; align-items: center; gap: 6px;
     }
 
     /* ── FOOTER ── */
     footer {
-      background: var(--navy);
-      padding: 3rem 4rem;
-      border-top: 1px solid rgba(200, 169, 110, 0.1);
+      background: var(--ink);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 3rem 5rem;
     }
 
     .footer-inner {
@@ -862,178 +1156,216 @@
       display: flex; align-items: center; gap: 12px;
     }
 
-    .footer-logo-mark {
-      width: 30px; height: 30px;
-      border: 1px solid rgba(200,169,110,0.4);
-      border-radius: 6px;
+    .footer-mark {
+      width: 28px; height: 28px;
+      border: 1px solid rgba(184,150,90,0.3);
       display: flex; align-items: center; justify-content: center;
-      font-family: 'DM Serif Display', serif;
-      font-size: 0.9rem;
+      font-family: 'Cormorant Garamond', serif;
       color: var(--gold);
+      font-size: 0.85rem;
     }
 
-    .footer-brand-name {
-      font-family: 'DM Serif Display', serif;
-      color: var(--white);
+    .footer-name {
+      font-family: 'Cormorant Garamond', serif;
+      color: rgba(255,255,255,0.6);
       font-size: 0.95rem;
+      font-weight: 300;
     }
 
     .footer-meta {
-      font-size: 0.75rem;
-      color: rgba(255,255,255,0.3);
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.18);
       text-align: right;
-      line-height: 1.6;
+      line-height: 1.7;
     }
 
     /* ── CHATBOT ── */
     .chatbot-toggle {
-      position: fixed; bottom: 2rem; right: 2rem;
-      width: 56px; height: 56px;
-      border-radius: 50%;
-      background: var(--navy);
-      border: 1.5px solid var(--gold);
+      position: fixed; bottom: 2.5rem; right: 2.5rem;
+      width: 52px; height: 52px;
+      border: 1px solid rgba(184,150,90,0.4);
+      background: var(--ink);
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 8px 32px rgba(11,30,45,0.3);
-      transition: all 0.3s; z-index: 9999;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+      transition: all 0.35s ease;
+      z-index: 9999;
       color: var(--gold);
+      position: fixed;
     }
 
     .chatbot-toggle:hover {
       background: var(--gold);
-      color: var(--navy);
-      transform: scale(1.08);
+      color: var(--ink);
+      transform: scale(1.05);
     }
 
     .chatbot-toggle.hidden { display: none; }
 
     .chatbot-container {
-      position: fixed; bottom: 2rem; right: 2rem;
+      position: fixed; bottom: 2.5rem; right: 2.5rem;
       width: 380px; height: 580px;
-      background: var(--white);
-      border-radius: 12px;
-      box-shadow: 0 24px 80px rgba(11,30,45,0.25);
-      display: none; flex-direction: column; z-index: 9999;
-      animation: slideUp 0.3s ease-out;
+      background: var(--ink);
+      border: 1px solid rgba(255,255,255,0.07);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+      display: none; flex-direction: column;
+      z-index: 9999;
+      animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
       overflow: hidden;
-      border: 1px solid rgba(11,30,45,0.08);
     }
 
     .chatbot-container.active { display: flex; }
 
     @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; transform: translateY(30px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .chatbot-header {
-      background: var(--navy);
-      color: white;
-      padding: 1.3rem 1.5rem;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 1.2rem 1.4rem;
       display: flex; justify-content: space-between; align-items: center;
-      border-bottom: 2px solid var(--gold);
+      position: relative;
     }
 
-    .chatbot-header-info { display: flex; align-items: center; gap: 10px; }
+    .chatbot-header::before {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, var(--teal), var(--gold));
+      opacity: 0.5;
+    }
 
-    .chatbot-header-dot {
-      width: 8px; height: 8px;
-      background: #4CAF50;
+    .chatbot-header-left { display: flex; align-items: center; gap: 10px; }
+
+    .chat-live-dot {
+      width: 7px; height: 7px;
+      background: #4ade80;
       border-radius: 50%;
-      animation: pulse 2s infinite;
+      animation: blink 2s infinite;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+    .chatbot-header-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--white);
     }
 
-    .chatbot-header h3 { font-size: 0.9rem; font-weight: 600; color: var(--white); }
-    .chatbot-header-sub { font-size: 0.7rem; color: var(--gold); font-weight: 500; }
+    .chatbot-header-sub {
+      font-size: 0.62rem;
+      color: var(--gold);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
 
     .chatbot-close {
-      background: none; border: none; color: rgba(255,255,255,0.6);
-      font-size: 1.3rem; cursor: pointer; transition: color 0.2s;
+      background: none; border: none;
+      color: rgba(255,255,255,0.3);
+      font-size: 1.2rem; cursor: pointer;
+      transition: color 0.2s; line-height: 1;
     }
+
     .chatbot-close:hover { color: var(--white); }
 
     .chatbot-content {
-      flex: 1; overflow-y: auto; padding: 1.5rem;
+      flex: 1; overflow-y: auto; padding: 1.2rem;
       display: flex; flex-direction: column;
-      background: #F8F9FA;
+      background: rgba(255,255,255,0.01);
+      gap: 0.8rem;
     }
+
+    .chatbot-content::-webkit-scrollbar { width: 3px; }
+    .chatbot-content::-webkit-scrollbar-track { background: transparent; }
+    .chatbot-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
 
     .chatbot-message {
-      margin-bottom: 1rem; display: flex; align-items: flex-start;
-      gap: 0.7rem; animation: fadeIn 0.3s ease-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
+      display: flex; align-items: flex-start; gap: 8px;
+      animation: fadeUp 0.3s ease-out;
     }
 
     .chatbot-message.user { justify-content: flex-end; }
 
-    .chatbot-avatar-box {
-      width: 32px; height: 32px; border-radius: 50%;
-      background: var(--navy); display: flex; align-items: center;
-      justify-content: center; flex-shrink: 0; color: var(--gold);
-      font-size: 0.7rem; font-weight: 700;
+    .chat-avatar {
+      width: 28px; height: 28px;
+      border: 1px solid rgba(184,150,90,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.75rem;
+      color: var(--gold);
+      flex-shrink: 0;
     }
 
     .chatbot-text {
-      background: var(--white);
-      color: var(--text-dark);
-      padding: 0.75rem 1rem;
-      border-radius: 12px;
-      font-size: 0.83rem;
-      line-height: 1.6;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.7);
+      padding: 0.7rem 0.9rem;
+      font-size: 0.8rem;
+      line-height: 1.65;
       max-width: 82%;
-      box-shadow: 0 1px 4px rgba(11,30,45,0.06);
-      border: 1px solid rgba(11,30,45,0.06);
+      font-weight: 300;
     }
 
     .chatbot-message.user .chatbot-text {
-      background: var(--navy);
-      color: white;
-      border: none;
-      box-shadow: none;
+      background: rgba(184,150,90,0.1);
+      border-color: rgba(184,150,90,0.2);
+      color: rgba(255,255,255,0.8);
     }
 
-    .chatbot-questions {
-      display: flex; flex-direction: column; gap: 0.6rem;
-      margin-top: auto; padding-bottom: 0.5rem;
-    }
-
-    .chatbot-question-btn {
-      background: var(--white);
-      border: 1px solid rgba(11,30,45,0.1);
-      color: var(--text-dark);
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: left;
-    }
-
-    .chatbot-question-btn:hover {
-      border-color: var(--teal);
-      background: rgba(42,138,181,0.04);
-      color: var(--teal);
-    }
-
-    .chatbot-suggestions {
+    .chat-suggestions {
       display: flex; flex-direction: column; gap: 0.5rem;
-      margin-top: 0.8rem;
+      margin-top: 0.4rem;
+    }
+
+    .chat-suggestion-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.45);
+      padding: 0.65rem 0.9rem;
+      font-size: 0.75rem;
+      font-weight: 300;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.25s;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .chat-suggestion-btn:hover {
+      border-color: rgba(184,150,90,0.3);
+      color: rgba(255,255,255,0.8);
+      background: rgba(184,150,90,0.04);
+    }
+
+    .chat-typing {
+      display: flex; align-items: center; gap: 5px;
+      padding: 0.7rem 0.9rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.05);
+      width: fit-content;
+    }
+
+    .chat-typing span {
+      width: 5px; height: 5px;
+      background: var(--teal-bright);
+      border-radius: 50%;
+      animation: typingDot 1.2s infinite;
+    }
+
+    .chat-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .chat-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typingDot {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-4px); opacity: 1; }
     }
 
     .chatbot-input-area {
-      padding: 0.9rem 1rem;
-      border-top: 1px solid rgba(11,30,45,0.07);
-      background: var(--white);
+      padding: 0.9rem 1.2rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      background: rgba(255,255,255,0.01);
     }
 
     .chatbot-input-row {
@@ -1042,157 +1374,149 @@
 
     .chatbot-input {
       flex: 1;
-      padding: 0.65rem 0.9rem;
-      border: 1.5px solid rgba(11,30,45,0.12);
-      border-radius: 8px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.82rem;
-      color: var(--text-dark);
+      padding: 0.6rem 0.85rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      color: var(--white);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 300;
       outline: none;
       transition: border-color 0.2s;
-      background: #F8F9FA;
     }
 
-    .chatbot-input:focus { border-color: var(--teal); background: var(--white); }
-    .chatbot-input:disabled { opacity: 0.5; cursor: not-allowed; }
+    .chatbot-input:focus { border-color: rgba(184,150,90,0.3); }
+    .chatbot-input::placeholder { color: rgba(255,255,255,0.2); }
+    .chatbot-input:disabled { opacity: 0.4; }
 
     .chatbot-send {
-      width: 36px; height: 36px;
-      background: var(--navy);
-      border: none;
-      border-radius: 8px;
-      color: var(--gold);
-      cursor: pointer;
+      width: 34px; height: 34px;
+      background: var(--gold);
+      border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      transition: all 0.2s;
+      color: var(--ink); flex-shrink: 0;
+      transition: background 0.25s;
     }
 
-    .chatbot-send:hover { background: var(--teal); color: var(--white); }
+    .chatbot-send:hover { background: var(--gold-bright); }
     .chatbot-send:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .chatbot-input-footer {
-      display: flex; align-items: center; gap: 6px;
-      margin-top: 0.5rem; justify-content: center;
+    .chat-footer-links {
+      display: flex; justify-content: center; gap: 8px; margin-top: 0.6rem;
     }
 
-    .chatbot-typing {
-      display: flex; align-items: center; gap: 8px;
-      padding: 0.7rem 1rem;
-      background: var(--white);
-      border-radius: 12px;
-      border: 1px solid rgba(11,30,45,0.06);
-      width: fit-content;
-      box-shadow: 0 1px 4px rgba(11,30,45,0.06);
+    .chat-footer-links a {
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.2);
+      text-decoration: none;
+      transition: color 0.2s;
     }
 
-    .chatbot-typing span {
-      width: 6px; height: 6px;
-      background: var(--teal);
-      border-radius: 50%;
-      animation: typingDot 1.2s infinite;
+    .chat-footer-links a:hover { color: rgba(255,255,255,0.5); }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .chatbot-typing span:nth-child(2) { animation-delay: 0.2s; }
-    .chatbot-typing span:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes typingDot {
-      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-      30% { transform: translateY(-5px); opacity: 1; }
-    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 1024px) {
-      nav { padding: 0 2rem; }
-      .hero { padding: 0 2rem; }
-      .hero-inner { grid-template-columns: 1fr; gap: 3rem; padding-top: 100px; }
+      nav, section, .trust-strip, footer { padding-left: 2.5rem; padding-right: 2.5rem; }
+      .hero { padding: 0 2.5rem; }
+      .hero-inner { grid-template-columns: 1fr; }
       .hero-panel { display: none; }
-      section { padding: 5rem 2rem; }
-      .trust-strip { padding: 1.5rem 2rem; }
-      .benefits-section { padding: 5rem 2rem; }
-      .contact-section { padding: 5rem 2rem; }
-      .upch-section { padding: 4rem 2rem; }
-      footer { padding: 2.5rem 2rem; }
+      .problema-grid, .beneficios-layout, .contacto-grid { grid-template-columns: 1fr; gap: 4rem; }
+      .dim-grid { grid-template-columns: repeat(2, 1fr); }
+      .planes-grid { grid-template-columns: repeat(2, 1fr); }
+      .dim-header { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 768px) {
       nav { padding: 0 1.5rem; }
       .nav-links { display: none; }
+      section { padding: 5rem 1.5rem; }
+      .trust-strip, footer { padding-left: 1.5rem; padding-right: 1.5rem; }
       .hero { padding: 0 1.5rem; }
-      .problem-grid { grid-template-columns: 1fr; gap: 3rem; }
-      .problem-stats { grid-template-columns: 1fr 1fr; }
-      .dim-grid { grid-template-columns: 1fr; }
-      .benefits-grid { grid-template-columns: 1fr; }
-      .contact-grid { grid-template-columns: 1fr; gap: 3rem; }
-      .process-steps { flex-direction: column; align-items: center; }
-      .process-line { display: none; }
-      .upch-inner { flex-direction: column; gap: 2rem; text-align: center; }
-      .trust-logos { gap: 1.5rem; }
-      .chatbot-container { width: calc(100vw - 2rem); right: 1rem; bottom: 5rem; height: 520px; }
+      .dim-grid, .planes-grid { grid-template-columns: 1fr; }
+      .beneficios-grid { grid-template-columns: 1fr; }
+      .stat-blocks { grid-template-columns: 1fr 1fr; }
+      .proceso-steps { flex-direction: column; align-items: center; gap: 2rem; }
+      .proceso-steps::before { display: none; }
+      .chatbot-container { width: calc(100vw - 3rem); right: 1.5rem; bottom: 5rem; height: 520px; }
+      .scroll-line { display: none; }
     }
   </style>
 </head>
 <body>
 
+<!-- Custom cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
 <!-- ── NAV ── -->
-<nav>
+<nav id="mainNav">
   <a href="#" class="nav-brand">
-    <div class="nav-logo-mark">S</div>
-    <div class="nav-brand-text">
-      <span class="nav-brand-name">SAMI Oncología</span>
-      <span class="nav-brand-sub">Sistema de Acompañamiento Integral</span>
-    </div>
+    <div class="nav-mark"><span>S</span></div>
+    <span class="nav-name">SAMI Oncología</span>
   </a>
 
   <ul class="nav-links">
-    <li><a href="#problema">El Problema</a></li>
+    <li><a href="#problema">Contexto</a></li>
     <li><a href="#dimensiones">Dimensiones</a></li>
-    <li><a href="#proceso">Proceso</a></li>
+    <li><a href="#planes">Planes</a></li>
     <li><a href="#contacto">Contacto</a></li>
   </ul>
 
-  <a href="#contacto" class="nav-cta">Solicitar Demo</a>
+  <a href="#contacto" class="nav-cta"><span>Solicitar demo</span></a>
 </nav>
 
 <!-- ── HERO ── -->
 <section class="hero">
-  <div class="hero-bg-lines"></div>
-  <div class="hero-glow"></div>
-  <div class="hero-glow-2"></div>
+  <div class="hero-grid"></div>
+  <canvas id="waveCanvas"></canvas>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
 
   <div class="hero-inner">
     <div class="hero-left">
-      <div class="hero-eyebrow">
-        <div class="hero-eyebrow-line"></div>
-        <span class="hero-eyebrow-text">Solución Clínica · UPCH 2026</span>
+      <div class="hero-tag">
+        <div class="hero-tag-dot"></div>
+        <span class="hero-tag-text">Solución clínica · 2026</span>
       </div>
 
       <h1 class="hero-title">
-        Adherencia oncológica <em>continua</em> para sus pacientes
+        <span class="hero-title-line">Adherencia</span>
+        <span class="hero-title-line"><em>oncológica</em></span>
+        <span class="hero-title-line">continua</span>
       </h1>
 
       <p class="hero-desc">
-        SAMI es un sistema de acompañamiento y seguimiento integral vía WhatsApp, desarrollado con IA médica especializada, que permite a su institución monitorear en tiempo real la adherencia terapéutica, detectar riesgos de abandono y actuar antes de que ocurran.
+        Sistema de acompañamiento y seguimiento integral vía WhatsApp, con IA médica especializada, que permite a su institución monitorear adherencia terapéutica en tiempo real y actuar antes del abandono.
       </p>
 
       <div class="hero-actions">
-        <a href="#contacto" class="btn-hero-primary">
-          Solicitar demostración
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <a href="#contacto" class="btn-primary">
+          <span>Solicitar demostración</span>
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
-        <a href="#proceso" class="btn-hero-secondary">Ver cómo funciona</a>
+        <a href="#planes" class="btn-ghost">Ver planes</a>
       </div>
     </div>
 
     <div class="hero-panel">
-      <div class="hero-panel-title">Indicadores de Impacto Clínico</div>
+      <div class="panel-label">Indicadores de impacto clínico</div>
       <div class="panel-stats">
         <div class="panel-stat">
-          <div class="panel-stat-num">24<span>/7</span></div>
+          <div class="panel-stat-num">24<sup>/7</sup></div>
           <div class="panel-stat-label">Monitoreo activo sin intervención manual</div>
         </div>
         <div class="panel-stat">
-          <div class="panel-stat-num">100<span>+</span></div>
+          <div class="panel-stat-num">100<sup>+</sup></div>
           <div class="panel-stat-label">Protocolos oncológicos integrados</div>
         </div>
         <div class="panel-stat">
@@ -1200,98 +1524,91 @@
           <div class="panel-stat-label">Dimensiones de seguimiento holístico</div>
         </div>
         <div class="panel-stat">
-          <div class="panel-stat-num">≥0</div>
-          <div class="panel-stat-label">Días adicionales de capacitación técnica</div>
+          <div class="panel-stat-num">0</div>
+          <div class="panel-stat-label">Apps adicionales requeridas al paciente</div>
         </div>
       </div>
       <div class="panel-divider"></div>
-      <div class="panel-features">
-        <div class="panel-feature">
-          <div class="panel-feature-dot"></div>
-          Integración vía WhatsApp — canal que sus pacientes ya usan
-        </div>
-        <div class="panel-feature">
-          <div class="panel-feature-dot"></div>
-          Alertas en tiempo real al equipo médico y de enfermería
-        </div>
-        <div class="panel-feature">
-          <div class="panel-feature-dot"></div>
-          Dashboard institucional con reportes de adherencia por cohorte
-        </div>
-        <div class="panel-feature">
-          <div class="panel-feature-dot"></div>
-          Respaldo académico y clínico de la UPCH
-        </div>
+      <div class="panel-list">
+        <div class="panel-list-item">Integración nativa vía WhatsApp</div>
+        <div class="panel-list-item">Alertas en tiempo real al equipo médico</div>
+        <div class="panel-list-item">Dashboard institucional con reportes exportables</div>
+        <div class="panel-list-item">Implementación en 2 a 4 semanas</div>
       </div>
     </div>
   </div>
+
+  <div class="scroll-line">
+    <div class="scroll-line-bar"></div>
+    <span class="scroll-line-text">Desplazar</span>
+  </div>
 </section>
 
-<!-- ── TRUST STRIP ── -->
+<!-- ── TRUST ── -->
 <div class="trust-strip">
-  <span class="trust-label">Desarrollado con apoyo de</span>
-  <div class="trust-divider"></div>
+  <span class="trust-label">Desarrollado por</span>
+  <div class="trust-sep"></div>
   <div class="trust-logos">
-    <span class="trust-logo">Universidad Peruana Cayetano Heredia</span>
-    <span class="trust-logo">Facultad de Medicina</span>
-    <span class="trust-logo">Oncología Clínica</span>
+    <span class="trust-logo">Equipo independiente</span>
     <span class="trust-logo">IA en Salud</span>
+    <span class="trust-logo">Oncología Clínica</span>
+    <span class="trust-logo">Lima, Perú</span>
   </div>
 </div>
 
 <!-- ── PROBLEMA ── -->
-<section class="problem-section" id="problema">
+<section class="problema" id="problema">
   <div class="container">
-    <div class="problem-grid">
+    <div class="problema-grid">
       <div>
-        <div class="section-eyebrow">
-          <div class="section-eyebrow-line"></div>
-          <span class="section-eyebrow-text">El Problema</span>
+        <div class="eyebrow reveal">
+          <div class="eyebrow-line"></div>
+          <span class="eyebrow-text">El problema</span>
         </div>
-        <h2 class="section-title">El abandono del tratamiento <em>es el mayor riesgo</em> en oncología ambulatoria</h2>
-        <p class="section-body">Las clínicas y hospitales enfrentan un desafío crítico: sus pacientes oncológicos presentan tasas de abandono e incumplimiento terapéutico que deterioran los resultados clínicos y sobrecargan al equipo médico con re-evaluaciones tardías.</p>
+        <h2 class="section-title reveal" style="margin-bottom:1.5rem;">El abandono ocurre<br><em>entre consultas</em></h2>
+        <p class="section-body reveal" style="margin-bottom:3rem;">Las clínicas y hospitales operan con seguimiento fragmentado. El equipo clínico detecta problemas cuando el daño ya está hecho — en la próxima cita.</p>
 
-        <div class="problem-points" style="margin-top:2.5rem;">
-          <div class="problem-point">
-            <div class="problem-point-num">01</div>
-            <div class="problem-point-text">
-              <h4>Seguimiento fragmentado y reactivo</h4>
-              <p>El equipo clínico solo detecta problemas en la próxima cita, cuando el daño ya está hecho.</p>
+        <div class="problema-points">
+          <div class="problema-point reveal">
+            <div class="problema-num">01</div>
+            <div>
+              <h4>Seguimiento reactivo, no preventivo</h4>
+              <p>Sin información entre citas, el equipo actúa tarde. Las señales de abandono son invisibles hasta que se materializan.</p>
             </div>
           </div>
-          <div class="problem-point">
-            <div class="problem-point-num">02</div>
-            <div class="problem-point-text">
+          <div class="problema-point reveal">
+            <div class="problema-num">02</div>
+            <div>
               <h4>Pacientes sin canal de comunicación continuo</h4>
-              <p>Los pacientes no tienen a quién reportar efectos secundarios, dudas o dificultades entre consultas.</p>
+              <p>No tienen a quién reportar síntomas, dudas o dificultades entre consultas. El silencio se confunde con adherencia.</p>
             </div>
           </div>
-          <div class="problem-point">
-            <div class="problem-point-num">03</div>
-            <div class="problem-point-text">
+          <div class="problema-point reveal">
+            <div class="problema-num">03</div>
+            <div>
               <h4>Equipos clínicos desbordados</h4>
-              <p>El personal médico y de enfermería no puede contactar proactivamente a decenas de pacientes simultáneos.</p>
+              <p>El personal no puede contactar proactivamente a decenas de pacientes simultáneos. El seguimiento manual no escala.</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="problem-stats">
-        <div class="problem-stat-box">
-          <span class="problem-stat-num">40%</span>
-          <span class="problem-stat-label">de pacientes oncológicos ambulatorios presentan baja adherencia al tratamiento</span>
+      <div class="stat-blocks reveal">
+        <div class="stat-block">
+          <span class="stat-block-num">40%</span>
+          <span class="stat-block-label">de pacientes oncológicos ambulatorios presenta baja adherencia</span>
         </div>
-        <div class="problem-stat-box">
-          <span class="problem-stat-num">3×</span>
-          <span class="problem-stat-label">mayor probabilidad de hospitalización en pacientes con seguimiento discontinuo</span>
+        <div class="stat-block">
+          <span class="stat-block-num">3×</span>
+          <span class="stat-block-label">mayor riesgo de hospitalización sin seguimiento continuo</span>
         </div>
-        <div class="problem-stat-box">
-          <span class="problem-stat-num">68%</span>
-          <span class="problem-stat-label">de los abandonos ocurren en los primeros 90 días del tratamiento</span>
+        <div class="stat-block">
+          <span class="stat-block-num">68%</span>
+          <span class="stat-block-label">de los abandonos ocurren en los primeros 90 días</span>
         </div>
-        <div class="problem-stat-box">
-          <span class="problem-stat-num">0</span>
-          <span class="problem-stat-label">herramientas digitales especializadas en oncología ambulatoria en Latinoamérica</span>
+        <div class="stat-block">
+          <span class="stat-block-num">0</span>
+          <span class="stat-block-label">herramientas digitales especializadas en oncología ambulatoria en LATAM</span>
         </div>
       </div>
     </div>
@@ -1299,271 +1616,305 @@
 </section>
 
 <!-- ── DIMENSIONES ── -->
-<section class="dimensions-section" id="dimensiones">
+<section class="dimensiones" id="dimensiones">
   <div class="container">
     <div class="dim-header">
       <div>
-        <div class="section-eyebrow">
-          <div class="section-eyebrow-line"></div>
-          <span class="section-eyebrow-text">Monitoreo Integral</span>
+        <div class="eyebrow reveal">
+          <div class="eyebrow-line" style="background:var(--teal);"></div>
+          <span class="eyebrow-text" style="color:var(--teal);">Monitoreo integral</span>
         </div>
-        <h2 class="section-title">6 dimensiones de<br><em>seguimiento holístico</em></h2>
+        <h2 class="section-title dark reveal">6 dimensiones<br>de <em>seguimiento holístico</em></h2>
       </div>
-      <p style="font-size:0.88rem; color:var(--text-mid); max-width:320px; line-height:1.8; font-weight:300;">SAMI evalúa cada dimensión del bienestar del paciente, generando un índice de adherencia multidimensional que su equipo médico puede monitorear en tiempo real.</p>
+      <p class="section-body dark reveal">SAMI evalúa cada dimensión del bienestar del paciente, generando un índice de adherencia multidimensional que su equipo puede monitorear en tiempo real.</p>
     </div>
 
     <div class="dim-grid">
-      <div class="dim-card">
-        <div class="dim-icon-box">
-          <svg class="dim-icon-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+      <div class="dim-card reveal">
+        <div class="dim-icon-wrap">
+          <svg class="dim-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
         </div>
-        <div class="dim-card-title">Farmacológica</div>
-        <div class="dim-card-desc">Monitoreo de horarios de medicación, omisiones, dosis y manejo de efectos secundarios en tiempo real con protocolos clínicos integrados.</div>
+        <div class="dim-title">Farmacológica</div>
+        <div class="dim-desc">Monitoreo de horarios de medicación, omisiones, dosis y efectos secundarios en tiempo real con protocolos clínicos integrados.</div>
       </div>
 
-      <div class="dim-card">
-        <div class="dim-icon-box">
-          <svg class="dim-icon-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg>
+      <div class="dim-card reveal">
+        <div class="dim-icon-wrap">
+          <svg class="dim-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
-        <div class="dim-card-title">Conductual</div>
-        <div class="dim-card-desc">Seguimiento de hábitos alimenticios, actividad física, descanso e indicaciones post-procedimiento según el plan terapéutico de cada paciente.</div>
+        <div class="dim-title">Conductual</div>
+        <div class="dim-desc">Seguimiento de hábitos alimenticios, actividad física e indicaciones post-procedimiento según el plan terapéutico individual.</div>
       </div>
 
-      <div class="dim-card">
-        <div class="dim-icon-box">
-          <svg class="dim-icon-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+      <div class="dim-card reveal">
+        <div class="dim-icon-wrap">
+          <svg class="dim-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
         </div>
-        <div class="dim-card-title">Adherencia a Citas</div>
-        <div class="dim-card-desc">Confirmación proactiva de citas programadas y detección temprana de cancelaciones repetidas que alertan al equipo sobre riesgo de abandono.</div>
+        <div class="dim-title">Adherencia a Citas</div>
+        <div class="dim-desc">Confirmación proactiva y detección temprana de cancelaciones repetidas que alertan sobre riesgo de abandono.</div>
       </div>
 
-      <div class="dim-card">
-        <div class="dim-icon-box">
-          <svg class="dim-icon-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+      <div class="dim-card reveal">
+        <div class="dim-icon-wrap">
+          <svg class="dim-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
         </div>
-        <div class="dim-card-title">Bienestar Emocional</div>
-        <div class="dim-card-desc">Detección automatizada de señales de ansiedad, depresión o angustia existencial con derivación oportuna al servicio de psicología oncológica.</div>
+        <div class="dim-title">Bienestar Emocional</div>
+        <div class="dim-desc">Detección de señales de ansiedad o depresión con derivación oportuna al servicio de psicología oncológica.</div>
       </div>
 
-      <div class="dim-card">
-        <div class="dim-icon-box">
-          <svg class="dim-icon-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <div class="dim-card reveal">
+        <div class="dim-icon-wrap">
+          <svg class="dim-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
-        <div class="dim-card-title">Factores Socioeconómicos</div>
-        <div class="dim-card-desc">Evaluación de barreras de acceso: economía, transporte, soporte familiar y creencias culturales que impactan la continuidad del tratamiento.</div>
+        <div class="dim-title">Factores Socioeconómicos</div>
+        <div class="dim-desc">Evaluación de barreras de acceso: economía, transporte, soporte familiar y creencias culturales que impactan la continuidad.</div>
       </div>
 
-      <div class="dim-card">
-        <div class="dim-icon-box">
-          <svg class="dim-icon-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <div class="dim-card reveal">
+        <div class="dim-icon-wrap">
+          <svg class="dim-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         </div>
-        <div class="dim-card-title">Experiencia Institucional</div>
-        <div class="dim-card-desc">Medición continua de la satisfacción del paciente con la atención recibida, permitiendo mejoras en los protocolos y procesos de su institución.</div>
+        <div class="dim-title">Experiencia Institucional</div>
+        <div class="dim-desc">Medición continua de satisfacción del paciente para mejoras en protocolos y procesos de su servicio.</div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ── PROCESO ── -->
-<section class="process-section" id="proceso">
+<section class="proceso" id="proceso">
   <div class="container">
-    <div class="process-header">
-      <div class="section-eyebrow" style="justify-content:center;">
-        <div class="section-eyebrow-line"></div>
-        <span class="section-eyebrow-text">Flujo Clínico</span>
+    <div class="proceso-header">
+      <div class="eyebrow reveal" style="justify-content:center;">
+        <div class="eyebrow-line"></div>
+        <span class="eyebrow-text">Flujo clínico</span>
       </div>
-      <h2 class="section-title" style="text-align:center;">Cómo opera SAMI en su institución</h2>
-      <p class="section-body" style="text-align:center; max-width:520px;">Un proceso clínico estructurado que se integra al flujo de trabajo de su equipo sin requerir cambios en infraestructura ni capacitación técnica compleja.</p>
+      <h2 class="section-title reveal" style="text-align:center; margin-bottom:1rem;">Cómo opera SAMI<br>en su institución</h2>
+      <p class="section-body reveal" style="text-align:center;">Sin cambios en infraestructura. Sin capacitación técnica compleja. Operativo en semanas.</p>
     </div>
 
-    <div class="process-timeline">
-      <div class="process-line"></div>
-      <div class="process-steps">
-        <div class="process-step">
-          <div class="process-step-num">
-            <span class="process-step-inner">1</span>
-          </div>
-          <h3>Alta del Paciente</h3>
-          <p>Registro del perfil clínico completo: diagnóstico, protocolo de tratamiento y plan de seguimiento personalizado.</p>
-        </div>
-        <div class="process-step">
-          <div class="process-step-num">
-            <span class="process-step-inner">2</span>
-          </div>
-          <h3>Diálogo Continuo</h3>
-          <p>SAMI inicia conversaciones proactivas vía WhatsApp con recordatorios, evaluaciones y reportes de síntomas.</p>
-        </div>
-        <div class="process-step">
-          <div class="process-step-num">
-            <span class="process-step-inner">3</span>
-          </div>
-          <h3>Análisis de IA</h3>
-          <p>Cálculo automático del índice de adherencia multidimensional y detección de patrones de riesgo de abandono.</p>
-        </div>
-        <div class="process-step">
-          <div class="process-step-num">
-            <span class="process-step-inner">4</span>
-          </div>
-          <h3>Alerta Médica</h3>
-          <p>Notificación inmediata al equipo clínico con nivel de riesgo, dimensión afectada y factores causales identificados.</p>
-        </div>
-        <div class="process-step">
-          <div class="process-step-num">
-            <span class="process-step-inner">5</span>
-          </div>
-          <h3>Intervención</h3>
-          <p>El equipo actúa con información precisa, de forma oportuna y focalizada, antes del abandono del tratamiento.</p>
-        </div>
+    <div class="proceso-steps">
+      <div class="proceso-step reveal">
+        <div class="paso-circle"><span class="paso-num">1</span></div>
+        <div class="paso-title">Alta del paciente</div>
+        <p class="paso-desc">Registro del perfil clínico completo: diagnóstico, protocolo y plan de seguimiento personalizado.</p>
+      </div>
+      <div class="proceso-step reveal">
+        <div class="paso-circle"><span class="paso-num">2</span></div>
+        <div class="paso-title">Diálogo continuo</div>
+        <p class="paso-desc">SAMI inicia conversaciones proactivas vía WhatsApp con recordatorios y evaluaciones periódicas.</p>
+      </div>
+      <div class="proceso-step reveal">
+        <div class="paso-circle"><span class="paso-num">3</span></div>
+        <div class="paso-title">Análisis de IA</div>
+        <p class="paso-desc">Cálculo del índice de adherencia multidimensional y detección de patrones de riesgo.</p>
+      </div>
+      <div class="proceso-step reveal">
+        <div class="paso-circle"><span class="paso-num">4</span></div>
+        <div class="paso-title">Alerta médica</div>
+        <p class="paso-desc">Notificación inmediata al equipo clínico con nivel de riesgo y factores causales identificados.</p>
+      </div>
+      <div class="proceso-step reveal">
+        <div class="paso-circle"><span class="paso-num">5</span></div>
+        <div class="paso-title">Intervención</div>
+        <p class="paso-desc">El equipo actúa con información precisa, de forma oportuna y focalizada, antes del abandono.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── BENEFICIOS INSTITUCIONALES ── -->
-<section class="benefits-section" id="beneficios">
+<!-- ── BENEFICIOS ── -->
+<section class="beneficios" id="beneficios">
   <div class="container">
-    <div style="max-width:600px; margin-bottom:4rem;">
-      <div class="section-eyebrow">
-        <div class="section-eyebrow-line"></div>
-        <span class="section-eyebrow-text" style="color:var(--gold);">Para Su Institución</span>
-      </div>
-      <h2 class="section-title">¿Por qué su clínica u hospital <em>necesita</em> SAMI?</h2>
-    </div>
-
-    <div class="benefits-grid">
-      <div class="benefit-item">
-        <div class="benefit-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <div class="beneficios-layout">
+      <div class="beneficios-left">
+        <div class="eyebrow reveal">
+          <div class="eyebrow-line"></div>
+          <span class="eyebrow-text">Para su institución</span>
         </div>
-        <div class="benefit-text">
+        <h2 class="section-title reveal" style="margin-bottom:1.5rem;">¿Por qué<br><em>SAMI</em>?</h2>
+        <p class="section-body reveal">Beneficios concretos para clínicas y hospitales que priorizan la continuidad del tratamiento oncológico.</p>
+      </div>
+
+      <div class="beneficios-grid">
+        <div class="beneficio reveal">
+          <div class="beneficio-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
           <h4>Mejora medible en resultados clínicos</h4>
-          <p>Mayor adherencia terapéutica se traduce en mejores tasas de respuesta, menos hospitalizaciones de urgencia y mayor supervivencia en sus cohortes de pacientes.</p>
+          <p>Mayor adherencia se traduce en mejores tasas de respuesta y menos hospitalizaciones de urgencia.</p>
         </div>
-      </div>
-
-      <div class="benefit-item">
-        <div class="benefit-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-        </div>
-        <div class="benefit-text">
+        <div class="beneficio reveal">
+          <div class="beneficio-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+          </div>
           <h4>Optimización de recursos del equipo médico</h4>
-          <p>SAMI automatiza el seguimiento rutinario, liberando al personal clínico para intervenciones de alto valor y reduciendo la carga administrativa de contacto con pacientes.</p>
+          <p>Seguimiento rutinario automatizado, liberando al personal para intervenciones de alto valor.</p>
         </div>
-      </div>
-
-      <div class="benefit-item">
-        <div class="benefit-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg>
-        </div>
-        <div class="benefit-text">
+        <div class="beneficio reveal">
+          <div class="beneficio-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
           <h4>Datos clínicos estructurados y auditables</h4>
-          <p>Acceso a reportes longitudinales de adherencia por paciente, servicio y cohorte, útiles para auditorías, acreditaciones e investigación clínica interna.</p>
+          <p>Reportes longitudinales por paciente, servicio y cohorte útiles para acreditaciones e investigación.</p>
         </div>
-      </div>
-
-      <div class="benefit-item">
-        <div class="benefit-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <div class="beneficio reveal">
+          <div class="beneficio-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+          </div>
+          <h4>Sin fricción tecnológica</h4>
+          <p>Opera sobre WhatsApp. Sin apps adicionales, sin hardware. La plataforma que sus pacientes ya usan.</p>
         </div>
-        <div class="benefit-text">
-          <h4>Implementación sin fricción tecnológica</h4>
-          <p>Sin apps adicionales para descargar ni hardware específico. SAMI opera sobre WhatsApp, la plataforma de mensajería más utilizada por sus pacientes en Latinoamérica.</p>
+        <div class="beneficio reveal">
+          <div class="beneficio-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h4>Trazabilidad documental</h4>
+          <p>Registro cronológico automatizado de cada interacción con el paciente para su servicio.</p>
         </div>
-      </div>
-
-      <div class="benefit-item">
-        <div class="benefit-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
-        </div>
-        <div class="benefit-text">
-          <h4>Protección ante el riesgo clínico-legal</h4>
-          <p>El registro automatizado y cronológico de cada interacción con el paciente proporciona trazabilidad documental del proceso de seguimiento de su servicio.</p>
-        </div>
-      </div>
-
-      <div class="benefit-item">
-        <div class="benefit-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        </div>
-        <div class="benefit-text">
-          <h4>Mejora de la satisfacción y retención del paciente</h4>
-          <p>Los pacientes perciben mayor calidad de atención cuando reciben acompañamiento continuo, lo que se traduce en mayor fidelización institucional y recomendaciones positivas.</p>
+        <div class="beneficio reveal">
+          <div class="beneficio-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </div>
+          <h4>Mayor satisfacción del paciente</h4>
+          <p>Acompañamiento continuo percibido como mayor calidad de atención y mejor retención institucional.</p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── UPCH ── -->
-<div class="upch-section">
-  <div class="upch-inner">
-    <div class="upch-badge">
-      <div class="upch-badge-main">UPCH</div>
-      <div class="upch-badge-year">Oncología · 2026</div>
+<!-- ── PLANES ── -->
+<section class="planes" id="planes">
+  <div class="container">
+    <div class="planes-header">
+      <div class="eyebrow reveal" style="justify-content:center;">
+        <div class="eyebrow-line" style="background:var(--teal);"></div>
+        <span class="eyebrow-text" style="color:var(--teal);">Planes</span>
+      </div>
+      <h2 class="section-title dark reveal" style="text-align:center; margin-bottom:1rem;">Nuestros planes</h2>
+      <p class="section-body dark reveal" style="text-align:center; margin: 0 auto 2rem; max-width:440px;">Ahorra entre 15% y 20% contratando plan anual.</p>
     </div>
-    <div class="upch-text">
-      <h3>Respaldo académico y clínico de primer nivel</h3>
-      <p>SAMI Oncología ha sido desarrollado en el marco de la Universidad Peruana Cayetano Heredia — una de las instituciones académico-médicas de mayor reconocimiento en Latinoamérica. Su diseño incorpora protocolos oncológicos validados, supervisión clínica especializada y estándares de seguridad de datos en salud, garantizando que su institución adopte una herramienta fundamentada en evidencia científica.</p>
+
+    <div class="planes-grid reveal">
+      <div class="plan-card">
+        <div class="plan-name">Starter</div>
+        <div class="plan-price"><sup>$</sup>299</div>
+        <div class="plan-period">/ mes</div>
+        <div class="plan-per-pac">$5.98 / pac.</div>
+        <div class="plan-divider"></div>
+        <div class="plan-features">
+          <div class="plan-feature">Hasta 50 pacientes activos</div>
+          <div class="plan-feature">Seguimiento por WhatsApp</div>
+          <div class="plan-feature">Dashboard básico</div>
+          <div class="plan-feature">Soporte por email</div>
+        </div>
+        <a href="#contacto" class="plan-cta">Comenzar</a>
+      </div>
+
+      <div class="plan-card featured">
+        <div class="plan-badge">Recomendado</div>
+        <div class="plan-name">Growth</div>
+        <div class="plan-price"><sup>$</sup>799</div>
+        <div class="plan-period">/ mes</div>
+        <div class="plan-per-pac">$4.00 / pac.</div>
+        <div class="plan-divider"></div>
+        <div class="plan-features">
+          <div class="plan-feature">Hasta 200 pacientes activos</div>
+          <div class="plan-feature">6 dimensiones completas</div>
+          <div class="plan-feature">Alertas en tiempo real</div>
+          <div class="plan-feature">Reportes exportables</div>
+        </div>
+        <a href="#contacto" class="plan-cta">Comenzar</a>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-name">Pro</div>
+        <div class="plan-price"><sup>$</sup>1,499</div>
+        <div class="plan-period">/ mes</div>
+        <div class="plan-per-pac">$3.00 / pac.</div>
+        <div class="plan-divider"></div>
+        <div class="plan-features">
+          <div class="plan-feature">Hasta 500 pacientes activos</div>
+          <div class="plan-feature">Dashboard avanzado por cohorte</div>
+          <div class="plan-feature">Integración con HIS</div>
+          <div class="plan-feature">Soporte prioritario</div>
+        </div>
+        <a href="#contacto" class="plan-cta">Comenzar</a>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-name">Enterprise</div>
+        <div class="plan-enterprise-price">A medida</div>
+        <div class="plan-period" style="margin-bottom:0.5rem;">precio personalizado</div>
+        <div class="plan-per-pac">Pacientes ilimitados</div>
+        <div class="plan-divider"></div>
+        <div class="plan-features">
+          <div class="plan-feature">Pacientes ilimitados</div>
+          <div class="plan-feature">Implementación dedicada</div>
+          <div class="plan-feature">SLA garantizado</div>
+          <div class="plan-feature">Cuenta manager asignado</div>
+        </div>
+        <a href="#contacto" class="plan-cta">Contactar</a>
+      </div>
     </div>
+
+    <p class="planes-note reveal"><strong>Setup fee único:</strong> de $500 a $1,500 USD según plan · Paciente activo: envía al menos 1 mensaje durante el periodo de facturación mensual</p>
   </div>
-</div>
+</section>
 
 <!-- ── CONTACTO ── -->
-<section class="contact-section" id="contacto">
+<section class="contacto" id="contacto">
   <div class="container">
-    <div style="text-align:center; margin-bottom:1rem;">
-      <div class="section-eyebrow" style="justify-content:center;">
-        <div class="section-eyebrow-line"></div>
-        <span class="section-eyebrow-text">Contacto Institucional</span>
-      </div>
-      <h2 class="section-title" style="text-align:center;">Hablemos sobre la implementación<br>en su institución</h2>
-      <p class="section-body" style="margin:0 auto; text-align:center;">Nuestro equipo está disponible para presentar una demostración personalizada, responder preguntas técnicas y desarrollar una propuesta adaptada a las necesidades específicas de su servicio de oncología.</p>
+    <div class="eyebrow reveal">
+      <div class="eyebrow-line"></div>
+      <span class="eyebrow-text">Contacto institucional</span>
     </div>
+    <h2 class="section-title reveal" style="margin-bottom:0.8rem;">Hablemos sobre la<br>implementación en su institución</h2>
+    <p class="section-body reveal" style="max-width:480px;">Coordinamos una demostración personalizada, respondemos preguntas técnicas y desarrollamos una propuesta adaptada a su servicio.</p>
 
-    <div class="contact-grid">
-      <div class="contact-left">
-        <div class="contact-info-items">
-          <a href="/cdn-cgi/l/email-protection#87f4e6eaeec7f2f7e4efa9f7e2" class="contact-info-item">
-            <div class="contact-info-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    <div class="contacto-grid">
+      <div>
+        <div class="contact-items reveal">
+          <a href="/cdn-cgi/l/email-protection#f380929e9ab38683909bdd8396" class="contact-item">
+            <div class="contact-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             </div>
             <div>
-              <div class="contact-info-label">Correo electrónico</div>
-              <div class="contact-info-value"><span class="__cf_email__" data-cfemail="8dfeece0e4cdf8fdeee5a3fde8">[email&#160;protected]</span></div>
+              <div class="contact-label">Correo electrónico</div>
+              <div class="contact-value"><span class="__cf_email__" data-cfemail="295a484440695c594a4107594c">[email&#160;protected]</span></div>
             </div>
           </a>
-
-          <a href="https://wa.me/51963242281" target="_blank" class="contact-info-item">
-            <div class="contact-info-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <a href="https://wa.me/51963242281" target="_blank" class="contact-item">
+            <div class="contact-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             </div>
             <div>
-              <div class="contact-info-label">WhatsApp directo</div>
-              <div class="contact-info-value">+51 963 242 281</div>
+              <div class="contact-label">WhatsApp directo</div>
+              <div class="contact-value">+51 963 242 281</div>
             </div>
           </a>
-
-          <div class="contact-info-item" style="cursor:default;">
-            <div class="contact-info-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <div class="contact-item" style="cursor:default;">
+            <div class="contact-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             </div>
             <div>
-              <div class="contact-info-label">Sede</div>
-              <div class="contact-info-value">Av. Honorio Delgado 430, San Martín de Porres, Lima</div>
+              <div class="contact-label">Sede</div>
+              <div class="contact-value">Av. Honorio Delgado 430, Lima</div>
             </div>
           </div>
         </div>
 
-        <div style="padding:1.5rem 2rem; background:var(--off-white); border-radius:8px; border-left:3px solid var(--gold);">
-          <p style="font-size:0.83rem; color:var(--text-mid); line-height:1.75; font-weight:300;"><strong style="color:var(--text-dark); font-weight:600;">Disponible para demostraciones</strong> — Coordinamos una presentación en su institución o de forma remota, adaptada al tiempo y necesidades de su equipo directivo y clínico.</p>
+        <div class="contact-note reveal">
+          <p><strong>Disponible para demostraciones</strong> — presencial en su institución o de forma remota, adaptada al tiempo de su equipo directivo y clínico.</p>
         </div>
       </div>
 
-      <div class="contact-right">
+      <div class="reveal">
         <div id="map"></div>
-        <div class="map-caption">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          Universidad Peruana Cayetano Heredia · Lima, Perú
+        <div class="map-note">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Av. Honorio Delgado 430, San Martín de Porres, Lima, Perú
         </div>
       </div>
     </div>
@@ -1574,91 +1925,112 @@
 <footer>
   <div class="footer-inner">
     <div class="footer-brand">
-      <div class="footer-logo-mark">S</div>
+      <div class="footer-mark">S</div>
       <div>
-        <div class="footer-brand-name">SAMI Oncología</div>
-        <div style="font-size:0.65rem; color:rgba(255,255,255,0.3); margin-top:2px; letter-spacing:0.08em; text-transform:uppercase;">Sistema de Acompañamiento y Seguimiento Integral</div>
+        <div class="footer-name">SAMI Oncología</div>
+        <div style="font-size:0.6rem; color:rgba(255,255,255,0.18); margin-top:2px; letter-spacing:0.1em; text-transform:uppercase;">Sistema de Acompañamiento Integral</div>
       </div>
     </div>
     <div class="footer-meta">
-      <div>Desarrollado en colaboración con la Universidad Peruana Cayetano Heredia</div>
-      <div style="margin-top:4px;">© 2026 SAMI Oncología · Lima, Perú · <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bbc8dad6d2fbcecbd8d395cbde">[email&#160;protected]</a></div>
+      <div>© 2026 SAMI Oncología · Lima, Perú</div>
+      <div style="margin-top:3px;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="453624282c053035262d6b3520">[email&#160;protected]</a> · +51 963 242 281</div>
     </div>
   </div>
 </footer>
 
 <!-- ── CHATBOT ── -->
-<button class="chatbot-toggle" id="chatToggle" aria-label="Abrir chat">
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+<button class="chatbot-toggle" id="chatToggle" aria-label="Abrir asistente">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
 </button>
 
 <div class="chatbot-container" id="chatContainer">
   <div class="chatbot-header">
-    <div class="chatbot-header-info">
-      <div class="chatbot-header-dot"></div>
+    <div class="chatbot-header-left">
+      <div class="chat-live-dot"></div>
       <div>
-        <div style="font-size:0.9rem; font-weight:600; color:white;">SAMI Oncología</div>
-        <div class="chatbot-header-sub">Asistente institucional · IA</div>
+        <div class="chatbot-header-name">SAMI Asistente</div>
+        <div class="chatbot-header-sub">Orientación institucional</div>
       </div>
     </div>
     <button class="chatbot-close" id="chatClose">×</button>
   </div>
 
   <div class="chatbot-content" id="chatContent">
-    <div class="chatbot-message" id="welcomeMsg">
-      <div class="chatbot-avatar-box">S</div>
-      <div class="chatbot-text">Bienvenido. Soy el asistente de SAMI Oncología. Puedo responder sus preguntas sobre nuestra solución para clínicas y hospitales. ¿En qué le puedo orientar?</div>
+    <div class="chatbot-message">
+      <div class="chat-avatar">S</div>
+      <div class="chatbot-text">Bienvenido. Soy el asistente de SAMI Oncología. ¿En qué le puedo orientar sobre nuestra solución?</div>
     </div>
-
-    <div class="chatbot-suggestions" id="chatSuggestions">
-      <button class="chatbot-question-btn" onclick="sendSuggestion(this)">¿Cómo funciona para el paciente?</button>
-      <button class="chatbot-question-btn" onclick="sendSuggestion(this)">¿Qué datos recibe el equipo médico?</button>
-      <button class="chatbot-question-btn" onclick="sendSuggestion(this)">¿Cuánto toma la implementación?</button>
-      <button class="chatbot-question-btn" onclick="sendSuggestion(this)">Quiero solicitar una demostración</button>
+    <div class="chat-suggestions" id="chatSuggestions">
+      <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">¿Cómo funciona para el paciente?</button>
+      <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">¿Qué datos recibe el equipo médico?</button>
+      <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">¿Cuánto toma la implementación?</button>
+      <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">¿Cuáles son los planes y precios?</button>
     </div>
   </div>
 
   <div class="chatbot-input-area">
     <div class="chatbot-input-row">
-      <input
-        type="text"
-        id="chatInput"
-        class="chatbot-input"
-        placeholder="Escriba su consulta institucional..."
-        autocomplete="off"
-      />
+      <input type="text" id="chatInput" class="chatbot-input" placeholder="Escriba su consulta..." autocomplete="off" />
       <button class="chatbot-send" id="chatSend">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
     </div>
-    <div class="chatbot-input-footer">
-      <a href="/cdn-cgi/l/email-protection#c3b0a2aeaa83b6b3a0abedb3a6" style="color:var(--text-light); font-size:0.7rem; text-decoration:none;"><span class="__cf_email__" data-cfemail="cbb8aaa6a28bbebba8a3e5bbae">[email&#160;protected]</span></a>
-      <span style="color:var(--text-light); font-size:0.7rem;">·</span>
-      <a href="https://wa.me/51963242281" target="_blank" style="color:var(--text-light); font-size:0.7rem; text-decoration:none;">+51 963 242 281</a>
+    <div class="chat-footer-links">
+      <a href="/cdn-cgi/l/email-protection#e390828e8aa39693808bcd9386"><span class="__cf_email__" data-cfemail="82f1e3efebc2f7f2e1eaacf2e7">[email&#160;protected]</span></a>
+      <span style="color:rgba(255,255,255,0.15);">·</span>
+      <a href="https://wa.me/51963242281" target="_blank">+51 963 242 281</a>
     </div>
   </div>
 </div>
 
 <!-- ── SCRIPTS ── -->
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-  // Map
+  // ── CURSOR ──
+  const cursor = document.getElementById('cursor');
+  const cursorRing = document.getElementById('cursorRing');
+
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+    cursorRing.style.left = e.clientX + 'px';
+    cursorRing.style.top = e.clientY + 'px';
+  });
+
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.style.width = '14px';
+      cursor.style.height = '14px';
+      cursorRing.style.width = '52px';
+      cursorRing.style.height = '52px';
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.style.width = '8px';
+      cursor.style.height = '8px';
+      cursorRing.style.width = '36px';
+      cursorRing.style.height = '36px';
+    });
+  });
+
+  // ── NAV SCROLL ──
+  window.addEventListener('scroll', () => {
+    document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 40);
+  });
+
+  // ── MAP ──
   const map = L.map('map', { zoomControl: true, scrollWheelZoom: false }).setView([-12.0236, -77.0564], 15);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap © CARTO',
-    maxZoom: 19
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CARTO', maxZoom: 19
   }).addTo(map);
 
   const markerIcon = L.divIcon({
-    html: `<div style="width:14px;height:14px;background:#C8A96E;border-radius:50%;border:3px solid #0B1E2D;box-shadow:0 2px 8px rgba(11,30,45,0.4);"></div>`,
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
-    className: ''
+    html: `<div style="width:12px;height:12px;background:#B8965A;border-radius:50%;border:2px solid #08141C;box-shadow:0 0 12px rgba(184,150,90,0.5);"></div>`,
+    iconSize: [12, 12], iconAnchor: [6, 6], className: ''
   });
 
   L.marker([-12.0236, -77.0564], { icon: markerIcon })
     .addTo(map)
-    .bindPopup('<strong style="font-family:sans-serif;font-size:12px;">SAMI Oncología · UPCH</strong><br><span style="font-size:11px;color:#666;">Av. Honorio Delgado 430, SMP</span>')
+    .bindPopup('<strong style="font-family:sans-serif;font-size:11px;color:#08141C;">SAMI Oncología</strong><br><span style="font-size:10px;color:#666;">Av. Honorio Delgado 430, SMP</span>')
     .openPopup();
 
   // ── GROQ AI CHATBOT ──
@@ -1701,7 +2073,7 @@ Al presentar los planes, sé claro y formal, menciona el descuento anual y sugie
 - Si preguntan sobre la universidad, institución académica o quiénes son los creadores, responde únicamente: "SAMI es un proyecto desarrollado por un equipo independiente. Para más información puede contactarnos directamente."
 - Si la pregunta está fuera del alcance de SAMI, indica que no puedes orientar sobre ese tema y deriva al contacto
 - No opines, no elogies, no persuadas — solo informa con neutralidad
-- No uses emojis. Puedes usar listas cortas solo cuando ayuden a la claridad`;
+- No uses emojis. Puedes usar listas cortas cuando ayuden a la claridad`;
 
   const chatHistory = [];
 
@@ -1725,36 +2097,25 @@ Al presentar los planes, sé claro y formal, menciona el descuento anual y sugie
   });
 
   function sendSuggestion(btn) {
-    const text = btn.textContent;
     chatSuggestions.style.display = 'none';
-    sendMessage(text);
+    sendMessage(btn.textContent);
   }
 
   function appendMessage(role, text) {
     const msg = document.createElement('div');
     msg.className = 'chatbot-message' + (role === 'user' ? ' user' : '');
-
-    if (role === 'user') {
-      msg.innerHTML = `<div class="chatbot-text">${text}</div>`;
-    } else {
-      msg.innerHTML = `<div class="chatbot-avatar-box">S</div><div class="chatbot-text">${text}</div>`;
-    }
-
+    msg.innerHTML = role === 'user'
+      ? `<div class="chatbot-text">${text}</div>`
+      : `<div class="chat-avatar">S</div><div class="chatbot-text">${text}</div>`;
     chatContent.appendChild(msg);
     chatContent.scrollTop = chatContent.scrollHeight;
-    return msg;
   }
 
   function showTyping() {
-    const typingEl = document.createElement('div');
-    typingEl.className = 'chatbot-message';
-    typingEl.id = 'typingIndicator';
-    typingEl.innerHTML = `
-      <div class="chatbot-avatar-box">S</div>
-      <div class="chatbot-typing">
-        <span></span><span></span><span></span>
-      </div>`;
-    chatContent.appendChild(typingEl);
+    const el = document.createElement('div');
+    el.className = 'chatbot-message'; el.id = 'typingIndicator';
+    el.innerHTML = `<div class="chat-avatar">S</div><div class="chat-typing"><span></span><span></span><span></span></div>`;
+    chatContent.appendChild(el);
     chatContent.scrollTop = chatContent.scrollHeight;
   }
 
@@ -1766,82 +2127,116 @@ Al presentar los planes, sé claro y formal, menciona el descuento anual y sugie
   async function sendMessage(text) {
     const trimmed = text.trim();
     if (!trimmed) return;
-
     chatInput.value = '';
     chatInput.disabled = true;
     chatSend.disabled = true;
-
     appendMessage('user', trimmed);
     chatHistory.push({ role: 'user', content: trimmed });
-
     showTyping();
-
     try {
       const response = await fetch(GROQ_CONFIG.endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${GROQ_CONFIG.apiKey}`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_CONFIG.apiKey}` },
         body: JSON.stringify({
           model: GROQ_CONFIG.model,
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            ...chatHistory
-          ],
-          max_tokens: 500,
-          temperature: 0.6
+          messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...chatHistory],
+          max_tokens: 400, temperature: 0.55
         })
       });
-
       const data = await response.json();
       removeTyping();
-
       if (data.choices && data.choices[0]) {
         const reply = data.choices[0].message.content;
         chatHistory.push({ role: 'assistant', content: reply });
         appendMessage('assistant', reply);
       } else {
-        appendMessage('assistant', 'Lo sentimos, hubo un inconveniente al procesar su consulta. Por favor contáctenos directamente a sami@upch.pe o al +51 963 242 281.');
+        appendMessage('assistant', 'Hubo un inconveniente. Contáctenos a sami@upch.pe o al +51 963 242 281.');
       }
     } catch (err) {
       removeTyping();
-      appendMessage('assistant', 'No fue posible conectarse en este momento. Puede escribirnos directamente a <a href="mailto:sami@upch.pe" style="color:var(--teal)">sami@upch.pe</a> o al <a href="https://wa.me/51963242281" target="_blank" style="color:var(--teal)">+51 963 242 281</a>.');
+      appendMessage('assistant', 'No fue posible conectarse. Escríbanos a <a href="mailto:sami@upch.pe" style="color:var(--gold)">sami@upch.pe</a> o al <a href="https://wa.me/51963242281" target="_blank" style="color:var(--gold)">+51 963 242 281</a>.');
     }
-
     chatInput.disabled = false;
     chatSend.disabled = false;
     chatInput.focus();
   }
 
   chatSend.addEventListener('click', () => sendMessage(chatInput.value));
-
-  chatInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(chatInput.value);
-    }
+  chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(chatInput.value); }
   });
 
-  // Scroll reveal
-  const revealEls = document.querySelectorAll('.dim-card, .benefit-item, .process-step, .problem-stat-box');
-  const observer = new IntersectionObserver((entries) => {
+  // ── WAVE ANIMATION ──
+  const canvas = document.getElementById('waveCanvas');
+  const ctx = canvas.getContext('2d');
+
+  let mouseX = 0;
+  let animFrame;
+
+  function resizeCanvas() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  document.addEventListener('mousemove', e => {
+    mouseX = e.clientX / window.innerWidth;
+  });
+
+  const waves = [
+    { y: 0.62, amplitude: 28, frequency: 0.012, speed: 0.006, phase: 0,   color: 'rgba(30,122,140,0.12)' },
+    { y: 0.70, amplitude: 22, frequency: 0.016, speed: 0.009, phase: 1.5, color: 'rgba(184,150,90,0.07)' },
+    { y: 0.78, amplitude: 18, frequency: 0.010, speed: 0.005, phase: 3.0, color: 'rgba(30,122,140,0.08)' },
+    { y: 0.85, amplitude: 14, frequency: 0.020, speed: 0.012, phase: 0.8, color: 'rgba(184,150,90,0.05)' },
+  ];
+
+  function drawWaves(ts) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const t = ts * 0.001;
+    const mouseFx = (mouseX - 0.5) * 12;
+
+    waves.forEach(w => {
+      w.phase += w.speed;
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height);
+
+      for (let x = 0; x <= canvas.width; x += 3) {
+        const nx = x / canvas.width;
+        const sway = Math.sin(nx * Math.PI) * mouseFx;
+        const y = (w.y * canvas.height)
+          + Math.sin(x * w.frequency + w.phase) * w.amplitude
+          + Math.sin(x * w.frequency * 0.5 + w.phase * 1.3) * (w.amplitude * 0.4)
+          + sway * 0.5;
+        ctx.lineTo(x, y);
+      }
+
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.closePath();
+      ctx.fillStyle = w.color;
+      ctx.fill();
+    });
+
+    animFrame = requestAnimationFrame(drawWaves);
+  }
+
+  requestAnimationFrame(drawWaves);
+
+  // ── SCROLL REVEAL ──
+  const revealEls = document.querySelectorAll('.reveal');
+  const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry, i) => {
       if (entry.isIntersecting) {
-        entry.target.style.transition = `opacity 0.5s ease ${i * 0.06}s, transform 0.5s ease ${i * 0.06}s`;
-        entry.target.style.opacity = '1';
-        entry.target.style.transform = 'translateY(0)';
-        observer.unobserve(entry.target);
+        const delay = entry.target.dataset.delay || (i * 0.08);
+        entry.target.style.transitionDelay = delay + 's';
+        entry.target.classList.add('visible');
+        revealObserver.unobserve(entry.target);
       }
     });
   }, { threshold: 0.1 });
 
-  revealEls.forEach(el => {
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(20px)';
-    observer.observe(el);
-  });
-
+  revealEls.forEach(el => revealObserver.observe(el));
 </script>
 
 </body>
