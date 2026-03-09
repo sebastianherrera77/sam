@@ -76,6 +76,7 @@
       z-index: 99998;
       transform: translate(-50%, -50%);
       transition: width 0.3s, height 0.3s;
+      display: none;
     }
 
     body:hover .cursor { opacity: 1; }
@@ -2485,7 +2486,7 @@
         // Procesar ruta principal (la más rápida)
         const mainRoute = osrmData.routes[0];
         
-        // Decodificar polyline o usar coordenadas directas de OSRM
+        // Usar coordenadas directas de OSRM
         const routeCoords = mainRoute.geometry.coordinates.map(coord => L.latLng(coord[1], coord[0]));
 
         // Dibujar la ruta principal RECOMENDADA con color azul y más gruesa
@@ -2509,7 +2510,8 @@
           coords: routeCoords,
           line: routeLine,
           distance: distanceKm.toFixed(1),
-          duration: durationMinutes
+          duration: durationMinutes,
+          trafficInfo: '(Sin tráfico)'
         };
 
         // Procesar ruta alterna si existe
@@ -2524,7 +2526,8 @@
           alternateRoute = {
             coords: alternateCoords,
             distance: alternateDistanceKm.toFixed(1),
-            duration: alternateDurationMinutes
+            duration: alternateDurationMinutes,
+            trafficInfo: '(Sin tráfico)'
           };
           
           window.alternateRoute = alternateRoute;
@@ -2568,6 +2571,7 @@
         // Información de la ruta
         const distance = window.primaryRoute.distance;
         const duration = window.primaryRoute.duration;
+        const trafficInfo = window.primaryRoute.trafficInfo;
         
         // Mostrar información debajo del mapa en lugar de alert
         const routeInfoDiv = document.getElementById('routeInfo');
@@ -2579,7 +2583,7 @@
               <div class="route-option-title">Ruta Alterna</div>
               <div class="route-option-detail">
                 <span>📏 ${alternateRoute.distance} km</span>
-                <span>⏱️ ${alternateRoute.duration} min (sin tráfico)</span>
+                <span>⏱️ ${alternateRoute.duration} min ${alternateRoute.trafficInfo}</span>
               </div>
             </div>
           `;
@@ -2590,7 +2594,7 @@
             <div class="route-option-title">Ruta Recomendada</div>
             <div class="route-option-detail">
               <span>📏 ${distance} km</span>
-              <span>⏱️ ${duration} min (sin tráfico)</span>
+              <span>⏱️ ${duration} min ${trafficInfo}</span>
             </div>
           </div>
           ${alternateHTML}
@@ -2633,6 +2637,42 @@
     }
   });
 
+
+  // Función para decodificar polylines de Google Maps
+  function decodeGooglePolyline(encoded) {
+    const inv = 1.0 / 1e5;
+    const decoded = [];
+    let prevlat = 0, prevlng = 0;
+    let i = 0;
+
+    while (i < encoded.length) {
+      let llat = 0;
+      let z = 0;
+      let c;
+      do {
+        c = encoded.charCodeAt(i++) - 63;
+        llat |= (c & 0x1f) << z;
+        z += 5;
+      } while (c >= 0x20);
+      
+      const dlat = llat & 1 ? ~(llat >> 1) : llat >> 1;
+      prevlat += dlat;
+
+      let llng = 0;
+      z = 0;
+      do {
+        c = encoded.charCodeAt(i++) - 63;
+        llng |= (c & 0x1f) << z;
+        z += 5;
+      } while (c >= 0x20);
+      
+      const dlng = llng & 1 ? ~(llng >> 1) : llng >> 1;
+      prevlng += dlng;
+
+      decoded.push(L.latLng(prevlat * inv, prevlng * inv));
+    }
+    return decoded;
+  }
 
   // Función para seleccionar ruta alternativa
   function selectRoute(index, event) {
